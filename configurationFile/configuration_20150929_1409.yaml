@@ -1,0 +1,7 @@
+PreTriggerSamples: 10
+PostTriggerSamples: 500
+SamplesInEventPacket: 510
+DownSamplingFactorForSavedWaveform: 4
+ChannelEnable: [true, true, true, true]
+TriggerThresholds: [800, 800, 800, 800]
+TriggerCloseThresholds: [800, 800, 800, 800]
