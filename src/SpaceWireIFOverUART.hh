@@ -87,6 +87,7 @@ public:
 	void close() throw (SpaceWireIFException) {
 		using namespace CxxUtilities;
 		using namespace std;
+		ssdtp->cancelReceive();
 		serialPort->close();
 	}
 

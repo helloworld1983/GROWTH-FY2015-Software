@@ -179,6 +179,7 @@
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelModule.hh"
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelManager.hh"
 #include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
+#include "yaml-cpp/yaml.h"
 
 enum class SpaceFibreADCException {
 	InvalidChannelNumber, OpenDeviceFailed, CloseDeviceFailed,
@@ -262,7 +263,6 @@ public:
 
 		this->rmapHandler = new RMAPHandlerUART(deviceName, { adcRMAPTargetNode });
 		this->rmapHandler->connectoToSpaceWireToGigabitEther();
-
 
 		//create an instance of ChannelManager
 		this->channelManager = new ChannelManager(rmapHandler, adcRMAPTargetNode);
@@ -720,6 +720,121 @@ public:
 	 */
 	EventDecoder* getEventDecoder() {
 		return eventDecoder;
+	}
+
+private:
+	size_t nChannels = 4;
+	size_t PreTriggerSamples = 4;
+	size_t PostTriggerSamples = 1000;
+	size_t SamplesInEventPacket = 1000;
+	size_t DownSamplingFactorForSavedWaveform = 1;
+	std::vector<bool> ChannelEnable;
+	std::vector<uint16_t> TriggerThresholds;
+	std::vector<uint16_t> TriggerCloseThresholds;
+
+public:
+	void dumpMustExistKeywords() {
+		using namespace std;
+		cout << "---------------------------------------------" << endl;
+		cout << "The following is a template of a configuration file." << endl;
+		cout << "---------------------------------------------" << endl;
+		cout << endl;
+		cout //
+		<< "PreTriggerSamples: 10" << endl //
+				<< "PostTriggerSamples: 500" << endl //
+				<< "SamplesInEventPacket: 510" << endl //
+				<< "DownSamplingFactorForSavedWaveform: 4" << endl //
+				<< "ChannelEnable: [true, true, true, true]" << endl //
+				<< "TriggerThresholds: [800, 800, 800, 800]" << endl //
+				<< "TriggerCloseThresholds: [800, 800, 800, 800]" << endl;
+	}
+
+private:
+	template<typename T, typename Y>
+	std::map<T, Y> parseYAMLMap(YAML::Node node) {
+		std::map<T, Y> outputMap;
+		for (auto e : node) {
+			outputMap.insert( { e.first.as<T>(), e.second.as<Y>() });
+		}
+		return outputMap;
+	}
+
+public:
+	void loadConfigurationFile(std::string inputFileName) {
+		using namespace std;
+		YAML::Node yaml_root = YAML::LoadFile(inputFileName);
+		std::vector<std::string> mustExistKeywords = { "PreTriggerSamples", "PostTriggerSamples", "SamplesInEventPacket",
+				"DownSamplingFactorForSavedWaveform", "ChannelEnable", "TriggerThresholds", "TriggerCloseThresholds" };
+
+		//---------------------------------------------
+		//check keyword existence
+		//---------------------------------------------
+		for (auto keyword : mustExistKeywords) {
+			if (!yaml_root[keyword].IsDefined()) {
+				cerr << "Error: " << keyword << " is not defined in the configuration file." << endl;
+				dumpMustExistKeywords();
+				exit(-1);
+			}
+		}
+
+		//---------------------------------------------
+		//load parameter values from the file
+		//---------------------------------------------
+		this->PreTriggerSamples = yaml_root["PreTriggerSamples"].as<size_t>();
+		this->PostTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
+		this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
+		this->DownSamplingFactorForSavedWaveform = yaml_root["DownSamplingFactorForSavedWaveform"].as<size_t>();
+		this->ChannelEnable = yaml_root["ChannelEnable"].as<std::vector<bool>>();
+		this->TriggerThresholds = yaml_root["TriggerThresholds"].as<std::vector<uint16_t>>();
+		this->TriggerCloseThresholds = yaml_root["TriggerCloseThresholds"].as<std::vector<uint16_t>>();
+
+		//---------------------------------------------
+		//dump setting
+		//---------------------------------------------
+		cout << "#---------------------------------------------" << endl;
+		cout << "# Configuration" << endl;
+		cout << "#---------------------------------------------" << endl;
+		cout << "PreTriggerSamples: " << this->PreTriggerSamples << endl;
+		cout << "PostTriggerSamples: " << this->PostTriggerSamples << endl;
+		cout << "SamplesInEventPacket: " << this->SamplesInEventPacket << endl;
+		cout << "DownSamplingFactorForSavedWaveform: " << this->DownSamplingFactorForSavedWaveform << endl;
+		cout << "ChannelEnable: [" << CxxUtilities::String::join(this->ChannelEnable,", ") << "]" << endl;
+		cout << "TriggerThresholds: [" << CxxUtilities::String::join(this->TriggerThresholds,", ") << "]" << endl;
+		cout << "TriggerCloseThresholds: [" << CxxUtilities::String::join(this->TriggerCloseThresholds,", ") << "]" << endl;
+
+		//---------------------------------------------
+		// Program the digitizer
+		//---------------------------------------------
+		try {
+			//record legnth
+			this->setNumberOfSamples(PreTriggerSamples + PostTriggerSamples);
+			this->setNumberOfSamplesInEventPacket(SamplesInEventPacket);
+
+			for (size_t ch = 0; ch < nChannels; ch++) {
+
+				//pre-trigger (delay)
+				this->setDepthOfDelay(ch, PreTriggerSamples);
+
+				//trigger mode
+				this->setTriggerMode(ch, SpaceFibreADC::TriggerMode::StartThreshold_NSamples_CloseThreshold);
+
+				//threshold
+				this->setStartingThreshold(ch, TriggerThresholds[ch]);
+				this->setClosingThreshold(ch, TriggerCloseThresholds[ch]);
+
+				//adc clock 50MHz
+				this->setAdcClock(SpaceFibreADC::ADCClockFrequency::ADCClock50MHz);
+
+				//turn on ADC
+				this->turnOnADCPower(ch);
+
+			}
+			cout << "Device configurtion done." << endl;
+		} catch (...) {
+			cerr << "Device configuration failed." << endl;
+			::exit(-1);
+		}
+
 	}
 
 };

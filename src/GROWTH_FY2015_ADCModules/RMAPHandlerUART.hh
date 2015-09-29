@@ -51,6 +51,7 @@ public:
 
 public:
 	virtual ~RMAPHandlerUART() {
+
 	}
 
 public:
@@ -95,11 +96,15 @@ public:
 		_isConnectedToSpWGbE = false;
 
 		using namespace std;
-		cout << "RMAPHandler::disconnectSpWGbE(): Closing SpaceWire interface" << endl;
-		this->spwif->close();
 		cout << "RMAPHandler::disconnectSpWGbE(): Stopping RMAPEngine" << endl;
 		rmapEngine->stop();
-
+		while(!rmapEngine->hasStopped){
+			CxxUtilities::Condition c;
+			c.wait(100);
+			cout << "Waiting for RMAPEngine to completely stop." << endl;
+		}
+		cout << "RMAPHandler::disconnectSpWGbE(): Closing SpaceWire interface" << endl;
+		this->spwif->close();
 		cout << "RMAPHandler::disconnectSpWGbE(): Deleting instances" << endl;
 		delete rmapEngine;
 		delete rmapInitiator;
