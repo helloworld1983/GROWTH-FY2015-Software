@@ -7,11 +7,15 @@
 
 #include "GROWTH_FY2015_ADC.hh"
 #include "EventListFileROOT.hh"
+#include "EventListFileFITS.hh"
+#ifdef USE_ROOT
 #include "TH1D.h"
 #include "TFile.h"
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TROOT.h"
+TApplication* app;
+#endif
 
 static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
 
@@ -20,16 +24,14 @@ static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
 class MainThread: public CxxUtilities::StoppableThread {
 public:
 	std::string deviceName;
-	TApplication* app;
 	std::string configurationFile;
 	double exposureInSec;
 
 public:
-	MainThread(std::string deviceName, std::string configurationFile, double exposureInSec, TApplication* app) {
+	MainThread(std::string deviceName, std::string configurationFile, double exposureInSec) {
 		this->deviceName = deviceName;
 		this->exposureInSec = exposureInSec;
 		this->configurationFile = configurationFile;
-		this->app = app;
 	}
 
 public:
@@ -72,8 +74,17 @@ public:
 		//---------------------------------------------
 		// Create an output file
 		//---------------------------------------------
-		std::string outputFileName=CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS()+".root";
-		EventListFile* eventListFile=new EventListFileROOT(outputFileName);
+		std::string outputFileName;
+		EventListFile* eventListFile;
+#ifdef USE_ROOT
+		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
+		eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile );
+#else
+		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
+		eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID, this->configurationFile,
+				adcBoard->getNSamplesInEventListFile());
+#endif
+		cout << "Output file name: " << outputFileName << endl;
 
 		//---------------------------------------------
 		// Send CPU Trigger
@@ -84,22 +95,29 @@ public:
 		//---------------------------------------------
 		// Read status
 		//---------------------------------------------
-		ChannelModule* channelModule = adcBoard->getChannelRegister(1);
-		printf("Livetime Ch.1 = %d\n", channelModule->getLivetime());
-		printf("ADC Ch.1 = %d\n", channelModule->getCurrentADCValue());
+		int debugChannel = 3;
+
+		ChannelModule* channelModule = adcBoard->getChannelRegister(debugChannel);
+		printf("Debugging Ch.%d\n", debugChannel);
+		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
+		printf("Livetime     = %d\n", channelModule->getLivetime());
+		printf("TriggerMode  = %d\n", channelModule->getTriggerMode());
 		cout << channelModule->getStatus() << endl;
 
 		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(AddressOf_EventFIFO_DataCountRegister);
-		printf("EventFIFO data count = %zu\n", eventFIFODataCount);
-		printf("Trigger count = %zu\n", channelModule->getTriggerCount());
-		printf("ADC Ch.1 = %d\n", channelModule->getCurrentADCValue());
+		printf("EventFIFO Count = %zu\n", eventFIFODataCount);
+		printf("TriggerCount = %zu\n", channelModule->getTriggerCount());
+		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
 
 		//---------------------------------------------
 		// Read events
 		//---------------------------------------------
 		size_t nEvents = 0;
-		TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
 		CxxUtilities::Condition c;
+
+#ifdef USE_ROOT
+		TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
+#endif
 
 #ifdef DRAW_CANVAS
 		hist->GetXaxis()->SetRangeUser(480, 1024);
@@ -118,9 +136,11 @@ public:
 			std::vector<SpaceFibreADC::Event*> events = adcBoard->getEvent();
 			cout << "Received " << events.size() << " events" << endl;
 			eventListFile->fillEvents(events);
+#ifdef USE_ROOT
 			for (auto event : events) {
 				hist->Fill(event->phaMax);
 			}
+#endif
 			nEvents += events.size();
 			cout << events.size() << " events (" << nEvents << ")" << endl;
 			adcBoard->freeEvents(events);
@@ -142,11 +162,13 @@ public:
 		eventListFile->close();
 		delete eventListFile;
 
+#ifdef USE_ROOT
 		cout << "Saving histogram" << endl;
 		TFile* file = new TFile("hist.root", "recreate");
 		file->cd();
 		hist->Write();
 		file->Close();
+#endif
 
 		adcBoard->stopAcquisition();
 		adcBoard->closeDevice();
@@ -168,7 +190,7 @@ public:
 
 int main(int argc, char* argv[]) {
 	using namespace std;
-	if (argc < 3) {
+	if (argc < 4) {
 		cerr << "Provide UART device name (e.g. /dev/tty.usb-aaa-bbb), YAML configuration file, and exposure.." << endl;
 		::exit(-1);
 	}
@@ -176,12 +198,10 @@ int main(int argc, char* argv[]) {
 	std::string configurationFile(argv[2]);
 	double exposureInSec = atoi(argv[3]);
 #ifdef DRAW_CANVAS
-	TApplication* app = new TApplication("app", &argc, argv);
-#else
-	TApplication* app = NULL;
+	app = new TApplication("app", &argc, argv);
 #endif
 
-	MainThread* mainThread = new MainThread(deviceName, configurationFile, exposureInSec, app);
+	MainThread* mainThread = new MainThread(deviceName, configurationFile, exposureInSec);
 
 #ifdef DRAW_CANVAS
 	mainThread->start();

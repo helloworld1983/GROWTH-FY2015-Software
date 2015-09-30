@@ -122,8 +122,8 @@ public:
 		cout << channelModule->getStatus() << endl;
 
 		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(AddressOf_EventFIFO_DataCountRegister);
-		printf("EventFIFO data count = %d\n", eventFIFODataCount);
-		printf("Trigger count = %d\n", channelModule->getTriggerCount());
+		printf("EventFIFO data count = %zu\n", eventFIFODataCount);
+		printf("Trigger count = %zu\n", channelModule->getTriggerCount());
 		printf("ADC Ch.1 = %d\n", channelModule->getCurrentADCValue());
 
 		//---------------------------------------------

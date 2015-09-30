@@ -18,7 +18,7 @@ ROOT_LIBS = $(shell root-config --glibs)
 ROOT_CFLAGS = $(shell root-config --cflags)
 
 CXXFLAGS = -I. -I../include -I./yaml-cpp/include
-LDFLAGS = -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a
+LDFLAGS = -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a -lcfitsio
 
 #---------------------------------------------
 # Raspberry Pi applications

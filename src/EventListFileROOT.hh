@@ -22,21 +22,11 @@ private:
 	TFile* outputFile = NULL;
 	std::string detectorID;
 	SpaceFibreADC::Event eventEntry;
-
+	std::string configurationYAMLFile;
 public:
 	EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "") :
-			EventListFile(fileName), detectorID(detectorID) {
-		TFile* outputFile = new TFile(fileName.c_str(), "recreate");
-		eventTree = new TTree("eventTree", "eventTree");
-
-		//write header info
-		CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate",
-				CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS());
-		CxxUtilities::ROOTUtilities::writeObjString("detectorID", detectorID);
-		if (configurationYAMLFile != "") {
-			std::string configurationYAML = CxxUtilities::File::getAllLinesAsString(configurationYAMLFile);
-			CxxUtilities::ROOTUtilities::writeObjString("configurationYAML", configurationYAML);
-		}
+			EventListFile(fileName), detectorID(detectorID), configurationYAMLFile(configurationYAMLFile) {
+		createOutputRootFile();
 	}
 
 public:
@@ -46,9 +36,11 @@ public:
 		}
 	}
 
-public:
+private:
 	void createOutputRootFile() {
 		using namespace std;
+		TFile* outputFile = new TFile(fileName.c_str(), "recreate");
+		eventTree = new TTree("eventTree", "eventTree");
 
 //    - C : a character string terminated by the 0 character
 //     - B : an 8 bit signed integer (Char_t)
@@ -71,6 +63,16 @@ public:
 		//eventTree->Branch("energy", &eventEntry.energy, "energy/F");
 		eventTree->Branch("phaMax", &eventEntry.phaMax, "phaMax/s");
 		eventTree->Branch("waveform", eventEntry.waveform, "waveform[nSamples]/s");
+
+		//write header info
+		CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate",
+				CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS());
+		CxxUtilities::ROOTUtilities::writeObjString("detectorID", detectorID);
+		if (configurationYAMLFile != "") {
+			std::string configurationYAML = CxxUtilities::File::getAllLinesAsString(configurationYAMLFile);
+			CxxUtilities::ROOTUtilities::writeObjString("configurationYAML", configurationYAML);
+		}
+
 	}
 
 public:

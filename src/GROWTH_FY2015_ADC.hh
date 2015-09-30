@@ -253,7 +253,7 @@ public:
 		using namespace std;
 
 		cout << "#---------------------------------------------" << endl;
-		cout << "# GROWTH_FY2015_ADC Constructor" <<endl;
+		cout << "# GROWTH_FY2015_ADC Constructor" << endl;
 		cout << "#---------------------------------------------" << endl;
 		//construct RMAPTargetNode instance
 		adcRMAPTargetNode = new RMAPTargetNode;
@@ -265,11 +265,11 @@ public:
 		adcRMAPTargetNode->setInitiatorLogicalAddress(0xFE);
 
 		this->rmapHandler = new RMAPHandlerUART(deviceName, { adcRMAPTargetNode });
-		bool connected=this->rmapHandler->connectoToSpaceWireToGigabitEther();
-		if(!connected){
+		bool connected = this->rmapHandler->connectoToSpaceWireToGigabitEther();
+		if (!connected) {
 			cerr << "SpaceWire interface could not be opened." << endl;
 			::exit(-1);
-		}else{
+		} else {
 			cout << "Connected to SpaceWire interface." << endl;
 		}
 
@@ -672,8 +672,10 @@ public:
 	 * @param[in] chNumber channel to be CPU-triggered
 	 */
 	void sendCPUTrigger() {
+		using namespace std;
 		for (size_t chNumber = 0; chNumber < SpaceFibreADC::NumberOfChannels; chNumber++) {
 			if (this->ChannelEnable[chNumber] == true) { //if enabled
+				cout << "CPU Trigger to Channel " << chNumber << endl;
 				channelModules[chNumber]->sendCPUTrigger();
 			}
 		}
@@ -756,8 +758,9 @@ public:
 		return eventDecoder;
 	}
 
-private:
-	size_t nChannels = 4;
+public:
+	const size_t nChannels = 4;
+	std::string DetectorID;
 	size_t PreTriggerSamples = 4;
 	size_t PostTriggerSamples = 1000;
 	size_t SamplesInEventPacket = 1000;
@@ -767,6 +770,11 @@ private:
 	std::vector<uint16_t> TriggerCloseThresholds;
 
 public:
+	size_t getNSamplesInEventListFile() {
+		return (this->PreTriggerSamples + this->PostTriggerSamples) / this->DownSamplingFactorForSavedWaveform;
+	}
+
+public:
 	void dumpMustExistKeywords() {
 		using namespace std;
 		cout << "---------------------------------------------" << endl;
@@ -774,7 +782,8 @@ public:
 		cout << "---------------------------------------------" << endl;
 		cout << endl;
 		cout //
-		<< "PreTriggerSamples: 10" << endl //
+		<< "DetectorID: fy2015a" << endl //
+				<< "PreTriggerSamples: 10" << endl //
 				<< "PostTriggerSamples: 500" << endl //
 				<< "SamplesInEventPacket: 510" << endl //
 				<< "DownSamplingFactorForSavedWaveform: 4" << endl //
@@ -797,8 +806,9 @@ public:
 	void loadConfigurationFile(std::string inputFileName) {
 		using namespace std;
 		YAML::Node yaml_root = YAML::LoadFile(inputFileName);
-		std::vector<std::string> mustExistKeywords = { "PreTriggerSamples", "PostTriggerSamples", "SamplesInEventPacket",
-				"DownSamplingFactorForSavedWaveform", "ChannelEnable", "TriggerThresholds", "TriggerCloseThresholds" };
+		std::vector<std::string> mustExistKeywords = { "DetectorID", "PreTriggerSamples", "PostTriggerSamples",
+				"SamplesInEventPacket", "DownSamplingFactorForSavedWaveform", "ChannelEnable", "TriggerThresholds",
+				"TriggerCloseThresholds" };
 
 		//---------------------------------------------
 		//check keyword existence
@@ -814,6 +824,7 @@ public:
 		//---------------------------------------------
 		//load parameter values from the file
 		//---------------------------------------------
+		this->DetectorID = yaml_root["DetectorID"].as<std::string>();
 		this->PreTriggerSamples = yaml_root["PreTriggerSamples"].as<size_t>();
 		this->PostTriggerSamples = yaml_root["PostTriggerSamples"].as<size_t>();
 		this->SamplesInEventPacket = yaml_root["SamplesInEventPacket"].as<size_t>();
@@ -828,6 +839,7 @@ public:
 		cout << "#---------------------------------------------" << endl;
 		cout << "# Configuration" << endl;
 		cout << "#---------------------------------------------" << endl;
+		cout << "DetectorID: " << this->DetectorID << endl;
 		cout << "PreTriggerSamples: " << this->PreTriggerSamples << endl;
 		cout << "PostTriggerSamples: " << this->PostTriggerSamples << endl;
 		cout << "SamplesInEventPacket: " << this->SamplesInEventPacket << endl;

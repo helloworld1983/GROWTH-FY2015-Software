@@ -1,5 +1,6 @@
+DetectorID: fy2015_version_a
 PreTriggerSamples: 10
-PostTriggerSamples: 500
+PostTriggerSamples: 100
 SamplesInEventPacket: 10
 DownSamplingFactorForSavedWaveform: 4
 ChannelEnable: [true, true, true, true]
