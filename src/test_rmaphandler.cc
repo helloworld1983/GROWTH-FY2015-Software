@@ -111,13 +111,13 @@ int main(int argc, char* argv[]) {
 	uint8_t gpsTime[GPSRegisterLengthInBytes];
 	rmapHandler->read(&target, AddressOf_GPSTimeRegister, GPSRegisterLengthInBytes, gpsTime);
 	for (size_t i = 0; i < GPSRegisterLengthInBytes-6; i++) {
-		cout << gpsTime[i];
+		cout << hex << right << setw(2) << setfill('0') <<  (uint32_t)gpsTime[i];
 	}
 	cout << dec << endl;
 	c.wait(2000);
 	rmapHandler->read(&target, AddressOf_GPSTimeRegister, GPSRegisterLengthInBytes, gpsTime);
 	for (size_t i = 0; i < GPSRegisterLengthInBytes-6; i++) {
-		cout << gpsTime[i];
+		cout << hex << right << setw(2) << setfill('0') <<  (uint32_t)gpsTime[i];
 	}
 	cout << dec << endl;
 

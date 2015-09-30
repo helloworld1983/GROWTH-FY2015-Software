@@ -193,6 +193,10 @@ enum class SpaceFibreADCException {
  */
 class GROWTH_FY2015_ADC {
 public:
+	static const uint32_t AddressOfGPSTimeRegister = 0x20000002;
+	static const size_t LengthOfGPSTimeRegister = 20;
+
+public:
 	class GROWTH_FY2015_ADCDumpThread: public CxxUtilities::StoppableThread {
 	private:
 		GROWTH_FY2015_ADC* parent;
@@ -236,6 +240,7 @@ public:
 private:
 	RMAPHandler* rmapHandler;
 	RMAPTargetNode* adcRMAPTargetNode;
+	RMAPInitiator* rmapIniaitorForGPSRegisterAccess;
 	ChannelManager* channelManager;
 	ConsumerManagerEventFIFO* consumerManager;
 	ChannelModule* channelModules[SpaceFibreADC::NumberOfChannels];
@@ -273,6 +278,9 @@ public:
 			cout << "Connected to SpaceWire interface." << endl;
 		}
 
+		//
+		rmapIniaitorForGPSRegisterAccess = new RMAPInitiator(this->rmapHandler->getRMAPEngine());
+
 		//create an instance of ChannelManager
 		this->channelManager = new ChannelManager(rmapHandler, adcRMAPTargetNode);
 
@@ -288,9 +296,10 @@ public:
 		this->eventDecoder = new EventDecoder();
 
 		//dump thread
-		this->dumpThread = new GROWTH_FY2015_ADCDumpThread(this);
-		this->dumpThread->start();
-
+		/*
+		 this->dumpThread = new GROWTH_FY2015_ADCDumpThread(this);
+		 this->dumpThread->start();
+		 */
 		cout << "Constructor completes." << endl;
 	}
 
@@ -299,10 +308,13 @@ public:
 		using namespace std;
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deconstructing GROWTH_FY2015_ADC instance." << endl;
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Stopping dump thread." << endl;
-		this->dumpThread->stop();
-		delete this->dumpThread;
+		if (this->dumpThread != NULL && this->dumpThread->isInRunMethod()) {
+			this->dumpThread->stop();
+			delete this->dumpThread;
+		}
 
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting RMAP Handler." << endl;
+		delete rmapIniaitorForGPSRegisterAccess;
 		delete rmapHandler;
 
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting internal modules." << endl;
@@ -313,6 +325,22 @@ public:
 		}
 		delete eventDecoder;
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Completed." << endl;
+	}
+
+private:
+	uint8_t gpsTimeRegister[LengthOfGPSTimeRegister];
+
+public:
+	/** Returns a GPS Register value.
+	 */
+	std::string getGPSRegister() {
+		using namespace std;
+		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, 20, gpsTimeRegister);
+		std::stringstream ss;
+		for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) {
+			ss << hex << right << setw(2) << setfill('0') << (uint32_t) gpsTimeRegister[i];
+		}
+		return ss.str();
 	}
 
 public:
@@ -377,8 +405,8 @@ public:
 		return rmapHandler;
 	}
 
-	//=============================================
-	// device-wide functions
+//=============================================
+// device-wide functions
 
 public:
 	/** Closes the device.
@@ -390,7 +418,9 @@ public:
 			consumerManager->disableEventDataOutput();
 			cout << "#stopping dump thread" << endl;
 			consumerManager->stopDumpThread();
-			this->dumpThread->stop();
+			if (this->dumpThread != NULL) {
+				this->dumpThread->stop();
+			}
 			cout << "#closing sockets" << endl;
 			consumerManager->closeSocket();
 			cout << "#disconnecting SpaceWire-to-GigabitEther" << endl;
@@ -400,7 +430,7 @@ public:
 		}
 	}
 
-	//=============================================
+//=============================================
 public:
 	/** Reads, decodes, and returns event data recorded by the board.
 	 * When no event packet is received within a timeout duration,
@@ -771,7 +801,7 @@ public:
 
 public:
 	size_t getNSamplesInEventListFile() {
-		return (this->PreTriggerSamples + this->PostTriggerSamples) / this->DownSamplingFactorForSavedWaveform;
+		return (this->SamplesInEventPacket) / this->DownSamplingFactorForSavedWaveform;
 	}
 
 public:

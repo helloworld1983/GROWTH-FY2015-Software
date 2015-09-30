@@ -39,6 +39,7 @@ public:
 public:
 	void run() {
 		using namespace std;
+		CxxUtilities::Condition c;
 		auto adcBoard = new GROWTH_FY2015_ADC(deviceName);
 
 #ifdef DRAW_CANVAS
@@ -93,6 +94,20 @@ public:
 		adcBoard->sendCPUTrigger();
 
 		//---------------------------------------------
+		// Read GPS Register
+		//---------------------------------------------
+		/*
+		 cout << "Reading GPS Register" << endl;
+		 cout << adcBoard->getGPSRegister() << endl;
+		 c.wait(1500);
+		 cout << adcBoard->getGPSRegister() << endl;
+		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000002) << endl;
+		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000004) << endl;
+		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000006) << endl;
+		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000008) << endl;
+		 */
+
+		//---------------------------------------------
 		// Read status
 		//---------------------------------------------
 		int debugChannel = 3;
@@ -113,7 +128,6 @@ public:
 		// Read events
 		//---------------------------------------------
 		size_t nEvents = 0;
-		CxxUtilities::Condition c;
 
 #ifdef USE_ROOT
 		TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
@@ -208,6 +222,7 @@ int main(int argc, char* argv[]) {
 	app->Run(true);
 #else
 	mainThread->run();
+	mainThread->join();
 #endif
 	return 0;
 }

@@ -88,6 +88,7 @@ private:
 		this->reportErrorThenQuitIfError(fitsStatus, __func__);
 
 		//write header info
+		writeHeader();
 
 		outputFileIsOpen = true;
 	}
@@ -95,6 +96,38 @@ private:
 public:
 	~EventListFileFITS() {
 		close();
+	}
+
+private:
+	void writeHeader() {
+		/* sample code
+		 fits_update_key_str_check(fp, n=(char*)"TELESCOP", v->telescop, c->telescop, &istat)||
+		 fits_update_key_fixdbl(fp, n=(char*)"dec_pnt", v->dec_pnt, 8, c->dec_pnt, &istat)||
+		 fits_update_key_lng(fp, n=(char*)"EQUINOX", v->equinox, c->equinox, &istat)||
+		 *
+		 */
+
+		char* n; //keyword name
+		std::string creationDate = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS();
+		if ( //
+				 //fileCreationDate
+		fits_update_key_str(outputFile, n = (char*) "FILEDATE", (char*)creationDate.c_str(), "fileCreationDate", &fitsStatus) || //
+				//detectorID
+				fits_update_key_str(outputFile, n = (char*) "DET_ID", (char*)this->detectorID.c_str(), "detectorID", &fitsStatus) //
+						) {
+			using namespace std;
+			cerr << "Error: while updating TTYPE comment for " << n << endl;
+			exit(-1);
+		}
+
+		//configurationYAML as HISTORY
+		if (configurationYAMLFile != "") {
+			std::vector<std::string> lines = CxxUtilities::File::getAllLines(configurationYAMLFile);
+			for (auto line : lines) {
+				line="YAML-- " + line;
+				fits_write_history(outputFile, (char*) line.c_str(), &fitsStatus);
+			}
+		}
 	}
 
 private:
