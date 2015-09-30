@@ -252,6 +252,9 @@ public:
 	GROWTH_FY2015_ADC(std::string deviceName) {
 		using namespace std;
 
+		cout << "#---------------------------------------------" << endl;
+		cout << "# GROWTH_FY2015_ADC Constructor" <<endl;
+		cout << "#---------------------------------------------" << endl;
 		//construct RMAPTargetNode instance
 		adcRMAPTargetNode = new RMAPTargetNode;
 		adcRMAPTargetNode->setID("ADCBox");
@@ -262,7 +265,13 @@ public:
 		adcRMAPTargetNode->setInitiatorLogicalAddress(0xFE);
 
 		this->rmapHandler = new RMAPHandlerUART(deviceName, { adcRMAPTargetNode });
-		this->rmapHandler->connectoToSpaceWireToGigabitEther();
+		bool connected=this->rmapHandler->connectoToSpaceWireToGigabitEther();
+		if(!connected){
+			cerr << "SpaceWire interface could not be opened." << endl;
+			::exit(-1);
+		}else{
+			cout << "Connected to SpaceWire interface." << endl;
+		}
 
 		//create an instance of ChannelManager
 		this->channelManager = new ChannelManager(rmapHandler, adcRMAPTargetNode);
@@ -281,6 +290,8 @@ public:
 		//dump thread
 		this->dumpThread = new GROWTH_FY2015_ADCDumpThread(this);
 		this->dumpThread->start();
+
+		cout << "Constructor completes." << endl;
 	}
 
 public:
@@ -608,6 +619,17 @@ public:
 	}
 
 public:
+	/** Starts data acquisition. Configuration of registers of
+	 * individual channels should be completed before invoking this method.
+	 * Started channels should have been provided via loadConfigurationFile().
+	 * @param channelsToBeStarted vector of bool, true if the channel should be started
+	 */
+	void startAcquisition() {
+		consumerManager->enableEventDataOutput();
+		channelManager->startAcquisition(this->ChannelEnable);
+	}
+
+public:
 	/** Checks if all data acquisition is completed in all channels.
 	 * 	return true if data acquisition is stopped.
 	 */
@@ -642,6 +664,18 @@ public:
 			using namespace std;
 			cerr << "Error in sendCPUTrigger(): invalid channel number " << chNumber << endl;
 			throw SpaceFibreADCException::InvalidChannelNumber;
+		}
+	}
+
+public:
+	/** Sends CPU Trigger to all enabled channels.
+	 * @param[in] chNumber channel to be CPU-triggered
+	 */
+	void sendCPUTrigger() {
+		for (size_t chNumber = 0; chNumber < SpaceFibreADC::NumberOfChannels; chNumber++) {
+			if (this->ChannelEnable[chNumber] == true) { //if enabled
+				channelModules[chNumber]->sendCPUTrigger();
+			}
 		}
 	}
 
@@ -798,9 +832,11 @@ public:
 		cout << "PostTriggerSamples: " << this->PostTriggerSamples << endl;
 		cout << "SamplesInEventPacket: " << this->SamplesInEventPacket << endl;
 		cout << "DownSamplingFactorForSavedWaveform: " << this->DownSamplingFactorForSavedWaveform << endl;
-		cout << "ChannelEnable: [" << CxxUtilities::String::join(this->ChannelEnable,", ") << "]" << endl;
-		cout << "TriggerThresholds: [" << CxxUtilities::String::join(this->TriggerThresholds,", ") << "]" << endl;
-		cout << "TriggerCloseThresholds: [" << CxxUtilities::String::join(this->TriggerCloseThresholds,", ") << "]" << endl;
+		cout << "ChannelEnable: [" << CxxUtilities::String::join(this->ChannelEnable, ", ") << "]" << endl;
+		cout << "TriggerThresholds: [" << CxxUtilities::String::join(this->TriggerThresholds, ", ") << "]" << endl;
+		cout << "TriggerCloseThresholds: [" << CxxUtilities::String::join(this->TriggerCloseThresholds, ", ") << "]"
+				<< endl;
+		cout << endl;
 
 		//---------------------------------------------
 		// Program the digitizer
@@ -837,6 +873,7 @@ public:
 
 	}
 
-};
+}
+;
 
 #endif /* GROWTH_FY2015_ADC_HH_ */

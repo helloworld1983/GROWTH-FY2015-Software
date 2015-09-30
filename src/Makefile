@@ -3,6 +3,7 @@ CFITSIO_SRC = cfitsio3370.tar.gz
 
 #============================================
 all: \
+	main_growth_fy2015_adc_measure_exposure \
 	test_serial \
 	test_serial_ssdtp \
 	test_serial_receive \
@@ -54,7 +55,9 @@ test_growth_fy2015_adc_loadConfigurationFile: test_growth_fy2015_adc_loadConfigu
 test_rmaphandler: test_rmaphandler.cc
 	$(CXX) -g -std=c++11 -stdlib=libc++ $^ $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@ 
 	
-
+main_growth_fy2015_adc_measure_exposure: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
+	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
+	
 #============================================
 # External libraries
 #============================================

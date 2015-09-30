@@ -26,7 +26,8 @@ private:
 	std::string deviceName;
 
 public:
-	RMAPHandlerUART(std::string deviceName, std::vector<RMAPTargetNode*> rmapTargetNodes) : RMAPHandler(){
+	RMAPHandlerUART(std::string deviceName, std::vector<RMAPTargetNode*> rmapTargetNodes) :
+			RMAPHandler() {
 		using namespace std;
 		this->deviceName = deviceName;
 		this->timeOutDuration = 1000.0;
@@ -67,7 +68,8 @@ public:
 			spwif->open();
 			_isConnectedToSpWGbE = true;
 		} catch (...) {
-			cout << "RMAPHandlerUART::connectoToSpaceWireToGigabitEther() connection failed" << endl;
+			cout << "RMAPHandlerUART::connectoToSpaceWireToGigabitEther() connection failed (" << this->deviceName << ")"
+					<< endl;
 			_isConnectedToSpWGbE = false;
 			return false;
 		}
@@ -98,7 +100,7 @@ public:
 		using namespace std;
 		cout << "RMAPHandler::disconnectSpWGbE(): Stopping RMAPEngine" << endl;
 		rmapEngine->stop();
-		while(!rmapEngine->hasStopped){
+		while (!rmapEngine->hasStopped) {
 			CxxUtilities::Condition c;
 			c.wait(100);
 			cout << "Waiting for RMAPEngine to completely stop." << endl;
@@ -115,7 +117,6 @@ public:
 		rmapInitiator = NULL;
 		cout << "RMAPHandler::disconnectSpWGbE(): Completed" << endl;
 	}
-
 
 public:
 	void read(std::string rmapTargetNodeID, uint32_t memoryAddress, uint32_t length, uint8_t *buffer) {

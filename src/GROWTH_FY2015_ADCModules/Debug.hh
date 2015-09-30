@@ -17,7 +17,7 @@ public:
 	 * @return true if semaphore block is in debug mode.
 	 */
 	static bool semaphore() {
-		return true;
+		return false;
 	}
 	/** Returns if channelmodule block is in debug mode.
 	 * @return true if channelmodule block is in debug mode.
