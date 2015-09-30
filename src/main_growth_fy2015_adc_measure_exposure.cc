@@ -1,0 +1,194 @@
+/*
+ * main_growth_fy2015_adc_measure_exposure.cc
+ *
+ *  Created on: Sep 27, 2015
+ *      Author: yuasa
+ */
+
+#include "GROWTH_FY2015_ADC.hh"
+#include "EventListFileROOT.hh"
+#include "TH1D.h"
+#include "TFile.h"
+#include "TApplication.h"
+#include "TCanvas.h"
+#include "TROOT.h"
+
+static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
+
+//#define DRAW_CANVAS 0
+
+class MainThread: public CxxUtilities::StoppableThread {
+public:
+	std::string deviceName;
+	TApplication* app;
+	std::string configurationFile;
+	double exposureInSec;
+
+public:
+	MainThread(std::string deviceName, std::string configurationFile, double exposureInSec, TApplication* app) {
+		this->deviceName = deviceName;
+		this->exposureInSec = exposureInSec;
+		this->configurationFile = configurationFile;
+		this->app = app;
+	}
+
+public:
+
+public:
+	void run() {
+		using namespace std;
+		auto adcBoard = new GROWTH_FY2015_ADC(deviceName);
+
+#ifdef DRAW_CANVAS
+		//---------------------------------------------
+		// Run ROOT eventloop
+		//---------------------------------------------
+		TCanvas* canvas = new TCanvas("c", "c", 500, 500);
+		canvas->Draw();
+		canvas->SetLogy();
+#endif
+
+		//---------------------------------------------
+		// Load configuration file
+		//---------------------------------------------
+		if (!CxxUtilities::File::exists(this->configurationFile)) {
+			cerr << "Error: YAML configuratin file " << this->configurationFile << " not found." << endl;
+			::exit(-1);
+		}
+		adcBoard->loadConfigurationFile(configurationFile);
+
+		cout << "//---------------------------------------------" << endl //
+				<< "// Start acquisition" << endl //
+				<< "//---------------------------------------------" << endl;
+		uint32_t startTime_unixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+		try {
+			adcBoard->startAcquisition();
+			cout << "Acquisition started." << endl;
+		} catch (...) {
+			cerr << "Failed to start acquisition." << endl;
+			::exit(-1);
+		}
+
+		//---------------------------------------------
+		// Create an output file
+		//---------------------------------------------
+		std::string outputFileName=CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS()+".root";
+		EventListFile* eventListFile=new EventListFileROOT(outputFileName);
+
+		//---------------------------------------------
+		// Send CPU Trigger
+		//---------------------------------------------
+		cout << "Sending CPU Trigger" << endl;
+		adcBoard->sendCPUTrigger();
+
+		//---------------------------------------------
+		// Read status
+		//---------------------------------------------
+		ChannelModule* channelModule = adcBoard->getChannelRegister(1);
+		printf("Livetime Ch.1 = %d\n", channelModule->getLivetime());
+		printf("ADC Ch.1 = %d\n", channelModule->getCurrentADCValue());
+		cout << channelModule->getStatus() << endl;
+
+		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(AddressOf_EventFIFO_DataCountRegister);
+		printf("EventFIFO data count = %zu\n", eventFIFODataCount);
+		printf("Trigger count = %zu\n", channelModule->getTriggerCount());
+		printf("ADC Ch.1 = %d\n", channelModule->getCurrentADCValue());
+
+		//---------------------------------------------
+		// Read events
+		//---------------------------------------------
+		size_t nEvents = 0;
+		TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
+		CxxUtilities::Condition c;
+
+#ifdef DRAW_CANVAS
+		hist->GetXaxis()->SetRangeUser(480, 1024);
+		hist->GetXaxis()->SetTitle("ADC Channel");
+		hist->GetYaxis()->SetTitle("Counts");
+		hist->Draw();
+		canvas->Update();
+//	RootEventLoop eventloop(app);
+//	eventloop.start();
+
+		size_t canvasUpdateCounter = 0;
+		const size_t canvasUpdateCounterMax = 10;
+#endif
+		uint32_t elapsedTime = 0;
+		while (elapsedTime < this->exposureInSec) {
+			std::vector<SpaceFibreADC::Event*> events = adcBoard->getEvent();
+			cout << "Received " << events.size() << " events" << endl;
+			eventListFile->fillEvents(events);
+			for (auto event : events) {
+				hist->Fill(event->phaMax);
+			}
+			nEvents += events.size();
+			cout << events.size() << " events (" << nEvents << ")" << endl;
+			adcBoard->freeEvents(events);
+			c.wait(50);
+
+#ifdef DRAW_CANVAS
+			canvasUpdateCounter++;
+			if (canvasUpdateCounter == canvasUpdateCounterMax) {
+				cout << "Update canvas." << endl;
+				canvasUpdateCounter = 0;
+				hist->Draw();
+				canvas->Update();
+			}
+#endif
+			elapsedTime = CxxUtilities::Time::getUNIXTimeAsUInt32() - startTime_unixTime;
+		}
+
+		cout << "Saving event list" << endl;
+		eventListFile->close();
+		delete eventListFile;
+
+		cout << "Saving histogram" << endl;
+		TFile* file = new TFile("hist.root", "recreate");
+		file->cd();
+		hist->Write();
+		file->Close();
+
+		adcBoard->stopAcquisition();
+		adcBoard->closeDevice();
+		cout << "Waiting child threads to be finalized..." << endl;
+		c.wait(1000);
+		cout << "Deleting ADCBoard instance." << endl;
+		delete adcBoard;
+
+#ifdef DRAW_CANVAS
+		cout << "Terminating ROOT event loop." << endl;
+		canvas->Close();
+		delete canvas;
+		app->Terminate(0);
+		gROOT->ProcessLine(".q");
+#endif
+	}
+
+};
+
+int main(int argc, char* argv[]) {
+	using namespace std;
+	if (argc < 3) {
+		cerr << "Provide UART device name (e.g. /dev/tty.usb-aaa-bbb), YAML configuration file, and exposure.." << endl;
+		::exit(-1);
+	}
+	std::string deviceName(argv[1]);
+	std::string configurationFile(argv[2]);
+	double exposureInSec = atoi(argv[3]);
+#ifdef DRAW_CANVAS
+	TApplication* app = new TApplication("app", &argc, argv);
+#else
+	TApplication* app = NULL;
+#endif
+
+	MainThread* mainThread = new MainThread(deviceName, configurationFile, exposureInSec, app);
+
+#ifdef DRAW_CANVAS
+	mainThread->start();
+	app->Run(true);
+#else
+	mainThread->run();
+#endif
+	return 0;
+}
+
