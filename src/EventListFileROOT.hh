@@ -23,6 +23,7 @@ private:
 	std::string detectorID;
 	SpaceFibreADC::Event eventEntry;
 	std::string configurationYAMLFile;
+
 public:
 	EventListFileROOT(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "") :
 			EventListFile(fileName), detectorID(detectorID), configurationYAMLFile(configurationYAMLFile) {
@@ -65,6 +66,11 @@ private:
 		eventTree->Branch("waveform", eventEntry.waveform, "waveform[nSamples]/s");
 
 		//write header info
+		writeHeader();
+	}
+
+private:
+	void writeHeader(){
 		CxxUtilities::ROOTUtilities::writeObjString("fileCreationDate",
 				CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS());
 		CxxUtilities::ROOTUtilities::writeObjString("detectorID", detectorID);
@@ -72,7 +78,6 @@ private:
 			std::string configurationYAML = CxxUtilities::File::getAllLinesAsString(configurationYAMLFile);
 			CxxUtilities::ROOTUtilities::writeObjString("configurationYAML", configurationYAML);
 		}
-
 	}
 
 public:

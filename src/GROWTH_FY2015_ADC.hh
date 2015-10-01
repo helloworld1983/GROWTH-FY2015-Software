@@ -328,19 +328,26 @@ public:
 	}
 
 private:
-	uint8_t gpsTimeRegister[LengthOfGPSTimeRegister];
+	uint8_t gpsTimeRegister[LengthOfGPSTimeRegister+1];
 
 public:
 	/** Returns a GPS Register value.
 	 */
 	std::string getGPSRegister() {
 		using namespace std;
-		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, 20, gpsTimeRegister);
+		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
 		std::stringstream ss;
 		for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) {
 			ss << hex << right << setw(2) << setfill('0') << (uint32_t) gpsTimeRegister[i];
 		}
 		return ss.str();
+	}
+
+public:
+	uint8_t* getGPSRegisterUInt8() {
+		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
+		gpsTimeRegister[LengthOfGPSTimeRegister]=0x00;
+		return gpsTimeRegister;
 	}
 
 public:
@@ -431,6 +438,9 @@ public:
 	}
 
 //=============================================
+private:
+	std::vector<SpaceFibreADC::Event*> events;
+
 public:
 	/** Reads, decodes, and returns event data recorded by the board.
 	 * When no event packet is received within a timeout duration,
@@ -442,7 +452,7 @@ public:
 	 * @return a vector containing pointers to decoded event data
 	 */
 	std::vector<SpaceFibreADC::Event*> getEvent() {
-		std::vector<SpaceFibreADC::Event*> events;
+		events.clear();
 		std::vector<uint8_t> data = consumerManager->getEventData();
 		if (data.size() != 0) {
 			eventDecoder->decodeEvent(&data);

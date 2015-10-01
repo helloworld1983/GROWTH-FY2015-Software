@@ -76,14 +76,13 @@ public:
 		// Create an output file
 		//---------------------------------------------
 		std::string outputFileName;
-		EventListFile* eventListFile;
 #ifdef USE_ROOT
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
-		eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile );
+		EventListFileROOT* eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile );
 #else
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
-		eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID, this->configurationFile,
-				adcBoard->getNSamplesInEventListFile());
+		EventListFileFITS* eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID,
+				this->configurationFile, adcBoard->getNSamplesInEventListFile());
 #endif
 		cout << "Output file name: " << outputFileName << endl;
 
@@ -96,16 +95,12 @@ public:
 		//---------------------------------------------
 		// Read GPS Register
 		//---------------------------------------------
-		/*
-		 cout << "Reading GPS Register" << endl;
-		 cout << adcBoard->getGPSRegister() << endl;
-		 c.wait(1500);
-		 cout << adcBoard->getGPSRegister() << endl;
-		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000002) << endl;
-		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000004) << endl;
-		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000006) << endl;
-		 cout << setw(8) << setfill('0') << adcBoard->getRMAPHandler()->getRegister(0x20000008) << endl;
-		 */
+		cout << "Reading GPS Register" << endl;
+		cout << adcBoard->getGPSRegister() << endl;
+		eventListFile->fillGPSTime(adcBoard->getGPSRegisterUInt8());
+		c.wait(1500);
+		cout << adcBoard->getGPSRegister() << endl;
+		eventListFile->fillGPSTime(adcBoard->getGPSRegisterUInt8());
 
 		//---------------------------------------------
 		// Read status
