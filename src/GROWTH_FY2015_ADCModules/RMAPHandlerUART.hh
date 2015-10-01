@@ -30,7 +30,7 @@ public:
 			RMAPHandler() {
 		using namespace std;
 		this->deviceName = deviceName;
-		this->timeOutDuration = 1000.0;
+		this->timeOutDuration = 2000.0;
 		this->maxNTrials = 10;
 		this->useDraftECRC = false;
 		this->spwif = NULL;

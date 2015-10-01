@@ -6,9 +6,9 @@
  */
 
 #include "GROWTH_FY2015_ADC.hh"
-#include "EventListFileROOT.hh"
 #include "EventListFileFITS.hh"
 #ifdef USE_ROOT
+#include "EventListFileROOT.hh"
 #include "TH1D.h"
 #include "TFile.h"
 #include "TApplication.h"
@@ -111,7 +111,6 @@ public:
 		printf("Debugging Ch.%d\n", debugChannel);
 		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
 		printf("Livetime     = %d\n", channelModule->getLivetime());
-		printf("TriggerMode  = %d\n", channelModule->getTriggerMode());
 		cout << channelModule->getStatus() << endl;
 
 		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(AddressOf_EventFIFO_DataCountRegister);
