@@ -220,6 +220,12 @@ public:
 		event->timeTag = (static_cast<uint64_t>(rawEvent.timeH) << 32) + (static_cast<uint64_t>(rawEvent.timeM) << 16)
 				+ (rawEvent.timeL);
 		event->phaMax = rawEvent.phaMax;
+		event->phaMaxTime = rawEvent.phaMaxTime;
+		event->phaMin = rawEvent.phaMin;
+		event->phaFirst = rawEvent.phaFirst;
+		event->phaLast = rawEvent.phaLast;
+		event->maxDerivative = rawEvent.maxDerivative;
+		event->baseline = rawEvent.baseline;
 		event->nSamples = waveformLength;
 		event->triggerCount = rawEvent.triggerCount;
 

@@ -894,14 +894,16 @@ public:
 				<< endl;
 		cout << endl;
 
-		//---------------------------------------------
-		// Program the digitizer
-		//---------------------------------------------
+		cout << "//---------------------------------------------" << endl;
+		cout << "// Programing the digitizer" << endl;
+		cout << "//---------------------------------------------" << endl;
 		try {
 			//record legnth
+			cout << "1" << endl;
 			this->setNumberOfSamples(PreTriggerSamples + PostTriggerSamples);
+			cout << "2" << endl;
 			this->setNumberOfSamplesInEventPacket(SamplesInEventPacket);
-
+			cout << "3" << endl;
 			for (size_t ch = 0; ch < nChannels; ch++) {
 
 				//pre-trigger (delay)

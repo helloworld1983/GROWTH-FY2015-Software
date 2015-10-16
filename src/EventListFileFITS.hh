@@ -26,8 +26,8 @@ private:
 	//---------------------------------------------
 	// event list HDU
 	//---------------------------------------------
-	static const size_t nColumns = 11;
-	char* ttypes[nColumns] = { //
+	static const size_t nColumns_Event = 11;
+	char* ttypes[nColumns_Event] = { //
 			(char*) "boardIndexAndChannel", //B
 					(char*) "timeTag", //K
 					(char*) "triggerCount", //U
@@ -41,7 +41,7 @@ private:
 					(char*) "waveform" //B
 			};
 	const size_t MaxTFORM = 1024;
-	char* tforms[nColumns] = { //
+	char* tforms[nColumns_Event] = { //
 			(char*) "B"/*uint8_t*/, //boardIndexAndChannel
 					(char*) "K"/*uint64_t*/, //timeTag
 					(char*) "U"/*uint16_t*/, //triggerCount
@@ -54,7 +54,7 @@ private:
 					(char*) "U"/*uint16_t*/, //baseline
 					new char[MaxTFORM] /* to be filled later */ //
 			};
-	char* tunits[nColumns] = { //
+	char* tunits[nColumns_Event] = { //
 			(char*) "", (char*) "", (char*) "", (char*) "", (char*) "", (char*) "" //
 			};
 	enum columnIndices {
@@ -127,9 +127,15 @@ private:
 		rowIndex = 0;
 		rowIndex_GPS = 0;
 
-		std::stringstream ss;
-		ss << this->nSamples << "U";
-		strcpy(tforms[5], ss.str().c_str());
+		size_t nColumns=nColumns_Event;
+
+		if (nSamples == 0) {
+			nColumns--; //delete waveform column
+		} else {
+			std::stringstream ss;
+			ss << this->nSamples << "U";
+			strcpy(tforms[nColumns - 1], ss.str().c_str());
+		}
 
 		long nRows = InitialRowNumber;
 		fitsNRows = InitialRowNumber;
@@ -193,8 +199,8 @@ private:
 				//nSamples
 				fits_update_key_lng(outputFile, n = (char*) "NSAMPLES", NSAMPLES, "nSamples", &fitsStatus) || //
 				//detectorID
-				fits_update_key_dbl(outputFile, n = (char*) "EXPOSURE", this->exposureInSec, 2, "exposure specified via command line",
-						&fitsStatus) //
+				fits_update_key_dbl(outputFile, n = (char*) "EXPOSURE", this->exposureInSec, 2,
+						"exposure specified via command line", &fitsStatus) //
 
 						) {
 			using namespace std;
@@ -285,20 +291,24 @@ public:
 			//phaMax
 			fits_write_col(outputFile, TUSHORT, Column_phaMax, rowIndex, firstElement, 1, &event->phaMax, &fitsStatus);
 			//phaMaxTime
-			fits_write_col(outputFile, TUSHORT, Column_phaMaxTime, rowIndex, firstElement, 1, &event->phaMax, &fitsStatus);
-			//phaMin
-			fits_write_col(outputFile, TUSHORT, Column_phaMax, rowIndex, firstElement, 1, &event->phaMin, &fitsStatus);
-			//phaFirst
-			fits_write_col(outputFile, TUSHORT, Column_phaMax, rowIndex, firstElement, 1, &event->phaFirst, &fitsStatus);
-			//phaLast
-			fits_write_col(outputFile, TUSHORT, Column_phaMax, rowIndex, firstElement, 1, &event->phaLast, &fitsStatus);
-			//maxDerivative
-			fits_write_col(outputFile, TUSHORT, Column_phaMax, rowIndex, firstElement, 1, &event->maxDerivative, &fitsStatus);
-			//baseline
-			fits_write_col(outputFile, TUSHORT, Column_phaMax, rowIndex, firstElement, 1, &event->baseline, &fitsStatus);
-			//waveform
-			fits_write_col(outputFile, TUSHORT, Column_waveform, rowIndex, firstElement, nSamples, event->waveform,
+			fits_write_col(outputFile, TUSHORT, Column_phaMaxTime, rowIndex, firstElement, 1, &event->phaMaxTime,
 					&fitsStatus);
+			//phaMin
+			fits_write_col(outputFile, TUSHORT, Column_phaMin, rowIndex, firstElement, 1, &event->phaMin, &fitsStatus);
+			//phaFirst
+			fits_write_col(outputFile, TUSHORT, Column_phaFirst, rowIndex, firstElement, 1, &event->phaFirst, &fitsStatus);
+			//phaLast
+			fits_write_col(outputFile, TUSHORT, Column_phaLast, rowIndex, firstElement, 1, &event->phaLast, &fitsStatus);
+			//maxDerivative
+			fits_write_col(outputFile, TUSHORT, Column_maxDerivative, rowIndex, firstElement, 1, &event->maxDerivative,
+					&fitsStatus);
+			//baseline
+			fits_write_col(outputFile, TUSHORT, Column_baseline, rowIndex, firstElement, 1, &event->baseline, &fitsStatus);
+			if (nSamples != 0) {
+				//waveform
+				fits_write_col(outputFile, TUSHORT, Column_waveform, rowIndex, firstElement, nSamples, event->waveform,
+						&fitsStatus);
+			}
 
 			//
 			expandIfNecessary();
