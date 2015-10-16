@@ -147,7 +147,7 @@ public:
 #endif
 
 		while (nEvents < nEventsMax) {
-			std::vector<SpaceFibreADC::Event*> events = adcBoard->getEvent();
+			std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
 			cout << "Received " << events.size() << " events" << endl;
 			for (auto event : events) {
 				/*

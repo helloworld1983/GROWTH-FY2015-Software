@@ -9,7 +9,7 @@
 #define EVENTLISTFILE_HH_
 
 #include "CxxUtilities/CxxUtilities.hh"
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
+#include "GROWTH_FY2015_ADCModules/Types.hh"
 
 /** Represents an event list file.
  */
@@ -28,7 +28,7 @@ public:
 	}
 
 public:
-	virtual void fillEvents(std::vector<SpaceFibreADC::Event*>& events) =0;
+	virtual void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) =0;
 
 public:
 	virtual size_t getEntries() =0;

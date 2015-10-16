@@ -117,7 +117,7 @@
 
  //---------------------------------------------
  // Read event data
- std::vector<SpaceFibreADC::Event*> events;
+ std::vector<GROWTH_FY2015_ADC_Type::Event*> events;
 
  cout << "Reading events" << endl;
  events=adc->getEvent();
@@ -172,6 +172,8 @@
  */
 
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Constants.hh"
+#include "GROWTH_FY2015_ADCModules/Types.hh"
+#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
 #include "GROWTH_FY2015_ADCModules/Debug.hh"
 #include "GROWTH_FY2015_ADCModules/SemaphoreRegister.hh"
 #include "GROWTH_FY2015_ADCModules/ConsumerManagerEventFIFO.hh"
@@ -224,7 +226,7 @@ public:
 				nReceivedEvents_previous = nReceivedEvents_latch;
 				cout << "GROWTH_FY2015_ADC received " << dec << parent->nReceivedEvents << " events (delta=" << dec << delta
 						<< ")." << endl;
-				cout << "SpaceFibreADC::EventDecoder available Event instances = " << dec
+				cout << "GROWTH_FY2015_ADC_Type::EventDecoder available Event instances = " << dec
 						<< this->eventDecoder->getNAllocatedEventInstances() << endl;
 			}
 		}
@@ -328,7 +330,7 @@ public:
 	}
 
 private:
-	uint8_t gpsTimeRegister[LengthOfGPSTimeRegister+1];
+	uint8_t gpsTimeRegister[LengthOfGPSTimeRegister + 1];
 
 public:
 	/** Returns a GPS Register value.
@@ -346,7 +348,7 @@ public:
 public:
 	uint8_t* getGPSRegisterUInt8() {
 		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
-		gpsTimeRegister[LengthOfGPSTimeRegister]=0x00;
+		gpsTimeRegister[LengthOfGPSTimeRegister] = 0x00;
 		return gpsTimeRegister;
 	}
 
@@ -439,19 +441,19 @@ public:
 
 //=============================================
 private:
-	std::vector<SpaceFibreADC::Event*> events;
+	std::vector<GROWTH_FY2015_ADC_Type::Event*> events;
 
 public:
 	/** Reads, decodes, and returns event data recorded by the board.
 	 * When no event packet is received within a timeout duration,
 	 * this method will return empty vector meaning a time out.
-	 * Each SpaceFibreADC::Event instances pointed by the entities
+	 * Each GROWTH_FY2015_ADC_Type::Event instances pointed by the entities
 	 * of the returned vector should be freed after use in the user
-	 * application. A freed SpaceFibreADC::Event instance will be
+	 * application. A freed GROWTH_FY2015_ADC_Type::Event instance will be
 	 * reused to represent another event data.
 	 * @return a vector containing pointers to decoded event data
 	 */
-	std::vector<SpaceFibreADC::Event*> getEvent() {
+	std::vector<GROWTH_FY2015_ADC_Type::Event*> getEvent() {
 		events.clear();
 		std::vector<uint8_t> data = consumerManager->getEventData();
 		if (data.size() != 0) {
@@ -466,7 +468,7 @@ public:
 	/** Frees an event instance so that buffer area can be reused in the following commands.
 	 * @param[in] event event instance to be freed
 	 */
-	void freeEvent(SpaceFibreADC::Event* event) {
+	void freeEvent(GROWTH_FY2015_ADC_Type::Event* event) {
 		eventDecoder->freeEvent(event);
 	}
 
@@ -474,7 +476,7 @@ public:
 	/** Frees event instances so that buffer area can be reused in the following commands.
 	 * @param[in] events a vector of event instance to be freed
 	 */
-	void freeEvents(std::vector<SpaceFibreADC::Event*>& events) {
+	void freeEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
 		for (auto event : events) {
 			eventDecoder->freeEvent(event);
 		}
@@ -654,6 +656,8 @@ public:
 	 * @param channelsToBeStarted vector of bool, true if the channel should be started
 	 */
 	void startAcquisition(std::vector<bool> channelsToBeStarted) {
+		consumerManager->disableEventDataOutput();
+		consumerManager->reset(); //reset EventFIFO
 		consumerManager->enableEventDataOutput();
 		channelManager->startAcquisition(channelsToBeStarted);
 	}
