@@ -138,6 +138,21 @@ public:
 		try {
 			serialPort->send(sheader, 12);
 			serialPort->send(&(data->at(0)), data->size());
+#ifdef DEBUG_SSDTP
+			using namespace std;
+			size_t length = data->size();
+			cout << "SSDTP::send():" << endl;
+			cout << "Header: ";
+			for (size_t i = 0; i < 12; i++) {
+				cout << hex << right << setw(2) << setfill('0') << (uint32_t) sheader[i] << " ";
+			}
+			cout << endl;
+			cout << "Data: " << dec << length << " bytes" << endl;
+			for (size_t i = 0; i < length; i++) {
+				cout << hex << right << setw(2) << setfill('0') << (uint32_t) data->at(i) << " ";
+			}
+			cout << endl << dec;
+#endif
 		} catch (...) {
 			sendmutex.unlock();
 			throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
@@ -174,6 +189,20 @@ public:
 		try {
 			serialPort->send(sheader, 12);
 			serialPort->send(data, length);
+#ifdef DEBUG_SSDTP
+			using namespace std;
+			cout << "SSDTP::send():" << endl;
+			cout << "Header: ";
+			for (size_t i = 0; i < 12; i++) {
+				cout << hex << right << setw(2) << setfill('0') << (uint32_t) sheader[i] << " ";
+			}
+			cout << endl;
+			cout << "Data: " << dec << length << " bytes" << endl;
+			for (size_t i = 0; i < length; i++) {
+				cout << hex << right << setw(2) << setfill('0') << (uint32_t) data[i] << " ";
+			}
+			cout << endl << dec;
+#endif
 		} catch (...) {
 			sendmutex.unlock();
 			throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
@@ -278,17 +307,20 @@ public:
 							return 0;
 						}
 //					cout << "#2-3" << endl;
+#ifdef DEBUG_SSDTP
+						using namespace std;
+						cout << "SSDTP::receive(): receiving header part (remaining size=" << dec << 12 - hsize << " bytes)" << endl;
+#endif
 						long result = serialPort->receive(rheader + hsize, 12 - hsize);
 						hsize += result;
-//					cout << "#2-4 received bytes = " << result << endl;
-						for (size_t i = 0; i < hsize; i++) {
-//						cout << "0x" << hex << right << setw(2) << setfill('0')  << (uint32_t)rheader[i] << " ";
-						}
-//					cout << dec;
 					}
 				} catch (SerialPortException& e) {
 //				cout << "#2-5" << endl;
 					if (e.getStatus() == SerialPortException::Timeout) {
+#ifdef DEBUG_SSDTP
+						using namespace std;
+						cout << "SSDTP::receive(): serial port timed out." << endl;
+#endif
 //					cout << "#2-6" << endl;
 						throw SpaceWireSSDTPException(SpaceWireSSDTPException::Timeout);
 					} else {
@@ -299,6 +331,16 @@ public:
 					throw SpaceWireSSDTPException(SpaceWireSSDTPException::Disconnected);
 				}
 
+#ifdef DEBUG_SSDTP
+				using namespace std;
+				cout << "SSDTP::receive(): header part received" << endl;
+				cout << "Header: ";
+				for (size_t i = 0; i < 12; i++) {
+					cout << hex << right << setw(2) << setfill('0') << (uint32_t) rheader[i] << " ";
+				}
+				cout << endl;
+#endif
+
 //			cout << "#3" << endl;
 				//data or control code part
 				if (rheader[0] == DataFlag_Complete_EOP || rheader[0] == DataFlag_Complete_EEP
@@ -308,15 +350,54 @@ public:
 					for (uint32_t i = 2; i < 12; i++) {
 						flagment_size = flagment_size * 0x100 + rheader[i];
 					}
-					//uint8_t* data_pointer=&(data->at(0));
+					//verify flagment size
+					if (flagment_size > BufferSize) {
+						cerr << "SpaceWireSSDTPModuleUART::receive(): too large flagment size (" << flagment_size << " bytes)"
+								<< endl;
+						cerr << "Something is wrong with SSDTP over Serail Port data communication." << endl;
+						cerr << "Trying to receive remainig data from receive buffer." << endl;
+						long result = serialPort->receive(receivebuffer, BufferSize);
+						cerr << result << " bytes received." << endl;
+						cout << "Data: ";
+						for (size_t i = 0; i < result; i++) {
+							cout << hex << right << setw(2) << setfill('0') << (uint32_t) *(receivebuffer + i) << " ";
+						}
+						cout << endl;
+						exit(-1);
+					}
+
 					uint8_t* data_pointer = receivebuffer;
 //				cout << "#5" << endl;
 					while (received_size != flagment_size) {
 //					cout << "#6" << endl;
 						long result;
 						_loop_receiveDataPart: //
+						if (this->receiveCanceled) {
+							//reset receiveCanceled
+							this->receiveCanceled = false;
+							//dump info
+							cerr << "SpaceWireSSDTPModuleUART::receive(): canceled while waiting to receive " << dec << flagment_size
+									<< " bytes." << endl;
+							cout << "Current header:" << endl;
+							for (size_t i = 0; i < 12; i++) {
+								cout << hex << right << setw(2) << setfill('0') << (uint32_t) rheader[i] << " ";
+							}
+							cout << dec << endl;
+							//return with no data
+							return 0;
+						}
 						try {
 							result = serialPort->receive(data_pointer + size + received_size, flagment_size - received_size);
+#ifdef DEBUG_SSDTP
+							using namespace std;
+							cout << "SSDTP::receive(): data part received" << endl;
+							cout << "Data: ";
+							for (size_t i = 0; i < result; i++) {
+								cout << hex << right << setw(2) << setfill('0') << (uint32_t) *(data_pointer + size + received_size + i)
+										<< " ";
+							}
+							cout << endl;
+#endif
 						} catch (SerialPortException e) {
 							if (e.getStatus() == SerialPortException::Timeout) {
 								goto _loop_receiveDataPart;
@@ -358,12 +439,12 @@ public:
 //				cout << "#11" << endl;
 				} else {
 					cout << "SSDTP fatal error with flag value of 0x" << hex << (uint32_t) rheader[0] << dec << endl;
-					cout << "Previous data:" << endl;
+					cout << "Previous data: (" << dec << receivedDataPrevious.size() << " bytes)" << endl;
 					for (size_t i = 0; i < receivedDataPrevious.size(); i++) {
 						cout << hex << right << setw(2) << setfill('0') << (uint32_t) receivedDataPrevious[i] << " ";
 					}
 					cout << dec << endl;
-					cout << "Current data:" << endl;
+					cout << "Current header:" << endl;
 					for (size_t i = 0; i < 12; i++) {
 						cout << hex << right << setw(2) << setfill('0') << (uint32_t) rheader[i] << " ";
 					}
@@ -388,12 +469,11 @@ public:
 //		cout << "#9" << endl;
 
 			//debug receive data
-			/*
-			static const size_t ReceivedDataPreviousMax = 128;
+#ifdef DEBUG_SSDTP
+			static const size_t ReceivedDataPreviousMax = 4096;
 			receivedDataPrevious.resize(std::min(size, ReceivedDataPreviousMax));
 			memcpy(&(receivedDataPrevious[0]), receivebuffer, std::min(size, ReceivedDataPreviousMax));
-			 */
-
+#endif
 			receivemutex.unlock();
 			return size;
 		} catch (SpaceWireSSDTPException& e) {
@@ -489,7 +569,7 @@ private:
 
 private:
 	void registerWrite(uint32_t address, std::vector<uint8_t> data) {
-		//send command
+//send command
 		sendmutex.lock();
 		sendbuffer[0] = ControlFlag_RegisterAccess_WriteCommand;
 		sendmutex.unlock();
@@ -555,6 +635,8 @@ public:
 	/** Cancels ongoing receive() method if any exist.
 	 */
 	void cancelReceive() {
+		using namespace std;
+		cerr << "SpaceWireSSDTPModuleUART::cancelReceive() invoked" << endl;
 		this->receiveCanceled = true;
 	}
 
