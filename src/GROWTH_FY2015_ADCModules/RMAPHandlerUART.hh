@@ -152,8 +152,10 @@ public:
 				rmapInitiator->read(rmapTargetNode, memoryAddress, length, buffer, timeOutDuration);
 				break;
 			} catch (RMAPInitiatorException& e) {
+				cerr << "RMAPHandler::read() 1: RMAPInitiatorException::" << e.toString() << endl;
 				std::cerr << "Read timed out (address=" << "0x" << hex << right << setw(8) << setfill('0')
 						<< (uint32_t) memoryAddress << " length=" << dec << length << "); trying again..." << std::endl;
+				spwif->cancelReceive();
 				if (i == maxNTrials - 1) {
 					if (e.getStatus() == RMAPInitiatorException::Timeout) {
 						throw RMAPHandlerException(RMAPHandlerException::TimeOut);
@@ -169,6 +171,7 @@ public:
 
 public:
 	void read(RMAPTargetNode* rmapTargetNode, std::string memoryObjectID, uint8_t *buffer) {
+		using namespace std;
 		if (rmapInitiator == NULL) {
 			return;
 		}
@@ -177,7 +180,8 @@ public:
 				rmapInitiator->read(rmapTargetNode, memoryObjectID, buffer, timeOutDuration);
 				break;
 			} catch (RMAPInitiatorException& e) {
-				std::cerr << "Time out; trying again..." << std::endl;
+				cerr << "RMAPHandler::read() 2: RMAPInitiatorException::" << e.toString() << endl;
+				spwif->cancelReceive();
 				if (i == maxNTrials - 1) {
 					if (e.getStatus() == RMAPInitiatorException::Timeout) {
 						throw RMAPHandlerException(RMAPHandlerException::TimeOut);
@@ -217,6 +221,7 @@ public:
 
 public:
 	void write(RMAPTargetNode *rmapTargetNode, uint32_t memoryAddress, uint8_t *data, uint32_t length) {
+		using namespace std;
 		if (rmapInitiator == NULL) {
 			return;
 		}
@@ -229,7 +234,9 @@ public:
 				}
 				break;
 			} catch (RMAPInitiatorException& e) {
+				cerr << "RMAPHandler::write() 1: RMAPInitiatorException::" << e.toString() << endl;
 				std::cerr << "Time out; trying again..." << std::endl;
+				spwif->cancelReceive();
 				if (i == maxNTrials - 1) {
 					if (e.getStatus() == RMAPInitiatorException::Timeout) {
 						throw RMAPHandlerException(RMAPHandlerException::TimeOut);
@@ -244,6 +251,7 @@ public:
 
 public:
 	void write(RMAPTargetNode *rmapTargetNode, std::string memoryObjectID, uint8_t* data) {
+		using namespace std;
 		if (rmapInitiator == NULL) {
 			return;
 		}
@@ -255,7 +263,9 @@ public:
 					rmapInitiator->write(rmapTargetNode, memoryObjectID, (uint8_t*) NULL, timeOutDuration);
 				}
 			} catch (RMAPInitiatorException& e) {
+				cerr << "RMAPHandler::write() 2: RMAPInitiatorException::" << e.toString() << endl;
 				std::cerr << "Time out; trying again..." << std::endl;
+				spwif->cancelReceive();
 				if (i == maxNTrials - 1) {
 					if (e.getStatus() == RMAPInitiatorException::Timeout) {
 						throw RMAPHandlerException(RMAPHandlerException::TimeOut);
