@@ -6,9 +6,9 @@
  */
 
 #include "GROWTH_FY2015_ADC.hh"
-#include "EventListFileROOT.hh"
 #include "EventListFileFITS.hh"
 #ifdef USE_ROOT
+#include "EventListFileROOT.hh"
 #include "TH1D.h"
 #include "TFile.h"
 #include "TApplication.h"

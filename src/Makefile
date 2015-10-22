@@ -4,27 +4,22 @@ CFITSIO_SRC = cfitsio3370.tar.gz
 #============================================
 all: \
 	growth_fy2015_adc_measure_exposure \
-	test_serial \
-	test_serial_ssdtp \
-	test_serial_receive \
-	test_rmap_to_fpga \
-	test_growth_fy2015_adc_cpuTrigger \
-	test_growth_fy2015_adc_loadConfigurationFile \
-	test_rmaphandler 
-#	test_readADC \
-#	test_setDAC \
+	test_readADC
 
+CXX=g++-4.8
 ROOT_LIBS = $(shell root-config --glibs)
 ROOT_CFLAGS = $(shell root-config --cflags)
 
-CXXFLAGS = -I. -I../include -I./yaml-cpp/include
-LDFLAGS = -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a -lcfitsio
+CXXFLAGS_PI = -lwiringPi -I../include/wiringPi
+
+CXXFLAGS =  -std=c++11 $(CXXFLAGS_PI) -I. -I../include -I./yaml-cpp/include -I$(HOME)/work/install/include -Icfitsio/include -O3
+LDFLAGS = -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a -Lcfitsio/lib -lcfitsio -L$(HOME)/work/install/lib -lpthread
 
 #---------------------------------------------
 # Raspberry Pi applications
 #---------------------------------------------
 test_readADC: test_readADC.cc
-	$(CXX) -std=c++11 -stdlib=libc++ $^ -lwiringPi -I../include -I../include/wiringPi
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 test_setDAC: test_setDAC.cc
 	$(CXX) -std=c++11 -stdlib=libc++ $^ -lwiringPi -I../include -I../include/wiringPi
@@ -56,7 +51,7 @@ test_rmaphandler: test_rmaphandler.cc
 	$(CXX) -g -std=c++11 -stdlib=libc++ $^ $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@ 
 	
 growth_fy2015_adc_measure_exposure: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
-	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
+	$(CXX) -g -std=c++11 main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) -o $@
 	
 #============================================
 # External libraries
