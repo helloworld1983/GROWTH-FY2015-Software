@@ -9,8 +9,10 @@
 #include "EventListFileROOT.hh"
 #include "EventListFileFITS.hh"
 #ifdef USE_ROOT
-#include "TH1D.h"
 #include "TFile.h"
+#endif
+#ifdef DRAW_CANVAS
+#include "TH1D.h"
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TROOT.h"
@@ -124,7 +126,7 @@ public:
 		//---------------------------------------------
 		size_t nEvents = 0;
 
-#ifdef USE_ROOT
+#ifdef DRAW_CANVAS
 		TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
 #endif
 
@@ -145,7 +147,8 @@ public:
 			std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
 			cout << "Received " << events.size() << " events" << endl;
 			eventListFile->fillEvents(events);
-#ifdef USE_ROOT
+#ifdef DRAW_CANVAS
+			cout << "Filling to hitoram" << endl;
 			for (auto event : events) {
 				hist->Fill(event->phaMax);
 			}
@@ -169,11 +172,11 @@ public:
 
 		cout << "Saving event list" << endl;
 		eventListFile->close();
-		delete eventListFile;
+		//delete eventListFile;
 
-#ifdef USE_ROOT
+#ifdef DRAW_CANVAS
 		cout << "Saving histogram" << endl;
-		TFile* file = new TFile("hist.root", "recreate");
+		TFile* file = new TFile("histogram.root", "recreate");
 		file->cd();
 		hist->Write();
 		file->Close();
@@ -185,14 +188,6 @@ public:
 		c.wait(1000);
 		cout << "Deleting ADCBoard instance." << endl;
 		delete adcBoard;
-
-#ifdef DRAW_CANVAS
-		cout << "Terminating ROOT event loop." << endl;
-		canvas->Close();
-		delete canvas;
-		app->Terminate(0);
-		gROOT->ProcessLine(".q");
-#endif
 	}
 
 };
@@ -206,15 +201,21 @@ int main(int argc, char* argv[]) {
 	std::string deviceName(argv[1]);
 	std::string configurationFile(argv[2]);
 	double exposureInSec = atoi(argv[3]);
+
+	int dummyArgc = 0;
+	char* dummyArgv[] = { (char*) "" };
 #ifdef DRAW_CANVAS
-	app = new TApplication("app", &argc, argv);
+	app = new TApplication("app", &dummyArgc, dummyArgv);
 #endif
 
 	MainThread* mainThread = new MainThread(deviceName, configurationFile, exposureInSec);
 
 #ifdef DRAW_CANVAS
 	mainThread->start();
-	app->Run(true);
+	CxxUtilities::Condition c;
+	c.wait(3000);
+	app->Run();
+	c.wait(3000);
 #else
 	mainThread->run();
 	mainThread->join();
