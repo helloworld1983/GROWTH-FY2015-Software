@@ -32,15 +32,16 @@ public:
 
 public:
 	~EventListFileROOT() {
+		/*
 		if (outputFile != NULL) {
 			outputFile->Close();
-		}
+		}*/
 	}
 
 private:
 	void createOutputRootFile() {
 		using namespace std;
-		TFile* outputFile = new TFile(fileName.c_str(), "recreate");
+		outputFile = new TFile(fileName.c_str(), "recreate");
 		eventTree = new TTree("eventTree", "eventTree");
 
 //    - C : a character string terminated by the 0 character
@@ -58,7 +59,7 @@ private:
 
 		eventTree->Branch("boardIndexAndChannel", &eventEntry.ch, "boardIndexAndChannel/i");
 		//eventTree->Branch("unixTime", &eventEntry.unixTime, "unixTime/D");
-		eventTree->Branch("timeTag", &eventEntry.timeTag, "timeTag/i");
+		eventTree->Branch("timeTag", &eventEntry.timeTag, "timeTag/l");
 		eventTree->Branch("triggerCount", &eventEntry.triggerCount, "triggerCount/i");
 		eventTree->Branch("nSamples", &eventEntry.nSamples, "nSamples/i");
 		//eventTree->Branch("energy", &eventEntry.energy, "energy/F");
@@ -81,10 +82,10 @@ private:
 	}
 
 public:
-	void fillEvents(std::vector<SpaceFibreADC::Event*>& events) {
+	void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
 		for (auto& event : events) {
-			memcpy(&eventTree, &event, sizeof(SpaceFibreADC::Event));
-			eventTree->Fill();
+			memcpy(&eventTree, &event, sizeof(GROWTH_FY2015_ADC_Type::Event));
+			//eventTree->Fill();
 		}
 	}
 
@@ -94,10 +95,14 @@ public:
 	}
 
 public:
+	void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) {}
+
+public:
 	void close() {
-		outputFile->Close();
+		//outputFile->Close();
 		outputFile = NULL;
 	}
+
 };
 
 #endif /* EVENTLISTFILEROOT_HH_ */
