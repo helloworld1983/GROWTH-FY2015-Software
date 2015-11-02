@@ -19,41 +19,56 @@ class EventListFileFITS: public EventListFile {
 private:
 	fitsfile* outputFile;
 	std::string detectorID;
-	SpaceFibreADC::Event eventEntry;
+	GROWTH_FY2015_ADC_Type::Event eventEntry;
 	std::string configurationYAMLFile;
 
 private:
 	//---------------------------------------------
 	// event list HDU
 	//---------------------------------------------
-	static const size_t nColumns = 6;
-	char* ttypes[nColumns] = { //
-			(char*) "boardIndexAndChannel", //
-					(char*) "timeTag", //
-					(char*) "triggerCount", //
-					(char*) "liveTime", //
-					(char*) "phaMax", //
-					(char*) "waveform" //
+	static const size_t nColumns_Event = 11;
+	char* ttypes[nColumns_Event] = { //
+			(char*) "boardIndexAndChannel", //B
+					(char*) "timeTag", //K
+					(char*) "triggerCount", //U
+					(char*) "phaMax", //U
+					(char*) "phaMaxTime", //U
+					(char*) "phaMin", //U
+					(char*) "phaFirst", //U
+					(char*) "phaLast", //U
+					(char*) "maxDerivative", //U
+					(char*) "baseline", //U
+					(char*) "waveform" //B
 			};
 	const size_t MaxTFORM = 1024;
-	char* tforms[nColumns] = { //
-			(char*) "B"/*uint8_t*/, //
-					(char*) "K"/*uint64_t*/, //
-					(char*) "U"/*uint16_t*/, //
-					(char*) "U"/*uint16_t*/, //
-					(char*) "U"/*uint16_t*/, //
+	char* tforms[nColumns_Event] = { //
+			(char*) "B"/*uint8_t*/, //boardIndexAndChannel
+					(char*) "K"/*uint64_t*/, //timeTag
+					(char*) "U"/*uint16_t*/, //triggerCount
+					(char*) "U"/*uint16_t*/, //phaMax
+					(char*) "U"/*uint16_t*/, //phaMaxTime
+					(char*) "U"/*uint16_t*/, //phaMin
+					(char*) "U"/*uint16_t*/, //phaFirst
+					(char*) "U"/*uint16_t*/, //phaLast
+					(char*) "U"/*uint16_t*/, //maxDerivative
+					(char*) "U"/*uint16_t*/, //baseline
 					new char[MaxTFORM] /* to be filled later */ //
 			};
-	char* tunits[nColumns] = { //
+	char* tunits[nColumns_Event] = { //
 			(char*) "", (char*) "", (char*) "", (char*) "", (char*) "", (char*) "" //
 			};
 	enum columnIndices {
 		Column_boardIndexAndChannel = 1,
 		Column_timeTag = 2,
 		Column_triggerCount = 3,
-		Column_liveTime = 4,
-		Column_phaMax = 5,
-		Column_waveform = 6
+		Column_phaMax = 4,
+		Column_phaMaxTime = 5,
+		Column_phaMin = 6,
+		Column_phaFirst = 7,
+		Column_phaLast = 8,
+		Column_maxDerivative = 9,
+		Column_baseline = 10,
+		Column_waveform = 11
 	};
 
 	//---------------------------------------------
@@ -62,17 +77,17 @@ private:
 	static const size_t nColumns_GPS = 3;
 	char* ttypes_GPS[nColumns_GPS] = { //
 			(char*) "fpgaTimeTag", //
-			(char*) "unixTime", //
+					(char*) "unixTime", //
 					(char*) "gpsTime" //
 			};
 	char* tforms_GPS[nColumns_GPS] = { //
 			(char*) "K", //
-			(char*) "V", //
+					(char*) "V", //
 					(char*) "20A" //
 			};
 	char* tunits_GPS[nColumns_GPS] = { //
 			(char*) "", //
-			(char*) "", //
+					(char*) "", //
 					(char*) "" //
 			};
 	enum columnIndices_GPS {
@@ -91,14 +106,16 @@ private:
 	size_t fitsNRows; //currently allocated rows
 	size_t rowExpansionStep = InitialRowNumber;
 	size_t nSamples;
+	double exposureInSec;
 
 private:
 	CxxUtilities::Mutex fitsAccessMutes;
 
 public:
 	EventListFileFITS(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "",
-			size_t nSamples = 1024) :
-			EventListFile(fileName), detectorID(detectorID), nSamples(nSamples), configurationYAMLFile(configurationYAMLFile) {
+			size_t nSamples = 1024, double exposureInSec = 0) :
+			EventListFile(fileName), detectorID(detectorID), nSamples(nSamples), configurationYAMLFile(configurationYAMLFile), exposureInSec(
+					exposureInSec) {
 		createOutputFITSFile();
 	}
 
@@ -110,9 +127,15 @@ private:
 		rowIndex = 0;
 		rowIndex_GPS = 0;
 
-		std::stringstream ss;
-		ss << this->nSamples << "U";
-		strcpy(tforms[5], ss.str().c_str());
+		size_t nColumns=nColumns_Event;
+
+		if (nSamples == 0) {
+			nColumns--; //delete waveform column
+		} else {
+			std::stringstream ss;
+			ss << this->nSamples << "U";
+			strcpy(tforms[nColumns - 1], ss.str().c_str());
+		}
 
 		long nRows = InitialRowNumber;
 		fitsNRows = InitialRowNumber;
@@ -174,7 +197,11 @@ private:
 				fits_update_key_str(outputFile, n = (char*) "DET_ID", (char*) this->detectorID.c_str(), "detectorID",
 						&fitsStatus) || //
 				//nSamples
-				fits_update_key_lng(outputFile, n = (char*) "NSAMPLES", NSAMPLES, "nSamples", &fitsStatus) //
+				fits_update_key_lng(outputFile, n = (char*) "NSAMPLES", NSAMPLES, "nSamples", &fitsStatus) || //
+				//detectorID
+				fits_update_key_dbl(outputFile, n = (char*) "EXPOSURE", this->exposureInSec, 2,
+						"exposure specified via command line", &fitsStatus) //
+
 						) {
 			using namespace std;
 			cerr << "Error: while updating TTYPE comment for " << n << endl;
@@ -224,17 +251,17 @@ public:
 		rowIndex_GPS++;
 
 		/* dump date
-		using namespace std;
-		cout << "YY/MM/DD HH:MM:DD = " << gpsTimeRegisterBuffer[2] << gpsTimeRegisterBuffer[3] << "/" //
-				<< gpsTimeRegisterBuffer[4] << gpsTimeRegisterBuffer[5] << "/" //
-				<< gpsTimeRegisterBuffer[6] << gpsTimeRegisterBuffer[7] << " " //
-				<< gpsTimeRegisterBuffer[8] << gpsTimeRegisterBuffer[9] << ":" //
-				<< gpsTimeRegisterBuffer[10] << gpsTimeRegisterBuffer[11] << ":" //
-				<< gpsTimeRegisterBuffer[12] << gpsTimeRegisterBuffer[13] << endl;
+		 using namespace std;
+		 cout << "YY/MM/DD HH:MM:DD = " << gpsTimeRegisterBuffer[2] << gpsTimeRegisterBuffer[3] << "/" //
+		 << gpsTimeRegisterBuffer[4] << gpsTimeRegisterBuffer[5] << "/" //
+		 << gpsTimeRegisterBuffer[6] << gpsTimeRegisterBuffer[7] << " " //
+		 << gpsTimeRegisterBuffer[8] << gpsTimeRegisterBuffer[9] << ":" //
+		 << gpsTimeRegisterBuffer[10] << gpsTimeRegisterBuffer[11] << ":" //
+		 << gpsTimeRegisterBuffer[12] << gpsTimeRegisterBuffer[13] << endl;
 		 */
 
 		//get unix time
-		long unixTime=CxxUtilities::Time::getUNIXTimeAsUInt32();
+		long unixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
 
 		//write
 		fits_write_col(outputFile, TLONGLONG, Column_fpgaTimeTag, rowIndex_GPS, firstElement, 1, &timeTag, &fitsStatus);
@@ -249,7 +276,7 @@ public:
 	}
 
 public:
-	void fillEvents(std::vector<SpaceFibreADC::Event*>& events) {
+	void fillEvents(std::vector<GROWTH_FY2015_ADC_Type::Event*>& events) {
 		fitsAccessMutes.lock();
 		for (auto& event : events) {
 			rowIndex++;
@@ -261,13 +288,27 @@ public:
 			//triggerCount
 			fits_write_col(outputFile, TUSHORT, Column_triggerCount, rowIndex, firstElement, 1, &event->triggerCount,
 					&fitsStatus);
-			//liveTime
-			fits_write_col(outputFile, TUSHORT, Column_liveTime, rowIndex, firstElement, 1, &event->livetime, &fitsStatus);
 			//phaMax
 			fits_write_col(outputFile, TUSHORT, Column_phaMax, rowIndex, firstElement, 1, &event->phaMax, &fitsStatus);
-			//waveform
-			fits_write_col(outputFile, TUSHORT, Column_waveform, rowIndex, firstElement, nSamples, event->waveform,
+			//phaMaxTime
+			fits_write_col(outputFile, TUSHORT, Column_phaMaxTime, rowIndex, firstElement, 1, &event->phaMaxTime,
 					&fitsStatus);
+			//phaMin
+			fits_write_col(outputFile, TUSHORT, Column_phaMin, rowIndex, firstElement, 1, &event->phaMin, &fitsStatus);
+			//phaFirst
+			fits_write_col(outputFile, TUSHORT, Column_phaFirst, rowIndex, firstElement, 1, &event->phaFirst, &fitsStatus);
+			//phaLast
+			fits_write_col(outputFile, TUSHORT, Column_phaLast, rowIndex, firstElement, 1, &event->phaLast, &fitsStatus);
+			//maxDerivative
+			fits_write_col(outputFile, TUSHORT, Column_maxDerivative, rowIndex, firstElement, 1, &event->maxDerivative,
+					&fitsStatus);
+			//baseline
+			fits_write_col(outputFile, TUSHORT, Column_baseline, rowIndex, firstElement, 1, &event->baseline, &fitsStatus);
+			if (nSamples != 0) {
+				//waveform
+				fits_write_col(outputFile, TUSHORT, Column_waveform, rowIndex, firstElement, nSamples, event->waveform,
+						&fitsStatus);
+			}
 
 			//
 			expandIfNecessary();

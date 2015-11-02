@@ -47,6 +47,10 @@ class SpaceWireIFOverUART: public SpaceWireIF, public SpaceWireIFActionTimecodeS
 
 public:
 	static const int BAUD_RATE = 230400;
+
+public:
+	static constexpr double WaitTimeAfterCancelReceive=1500;//ms
+
 private:
 	std::string deviceName;
 	SpaceWireSSDTPModuleUART* ssdtp;
@@ -212,7 +216,11 @@ public:
 public:
 	/** Cancels ongoing receive() method if any exist.
 	 */
-	void cancelReceive(){}
+	void cancelReceive(){
+		ssdtp->cancelReceive();
+		CxxUtilities::Condition c;
+		c.wait(WaitTimeAfterCancelReceive);
+	}
 };
 
 /** History

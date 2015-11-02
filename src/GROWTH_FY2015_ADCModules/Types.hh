@@ -5,12 +5,12 @@
  *      Author: yuasa
  */
 
-#ifndef SPACEFIBREADC_TYPES_HH_
-#define SPACEFIBREADC_TYPES_HH_
+#ifndef GROWTH_FY2015_ADC_TYPES_HH_
+#define GROWTH_FY2015_ADC_TYPES_HH_
 
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Constants.hh"
 
-namespace SpaceFibreADC {
+namespace GROWTH_FY2015_ADC_Type {
 enum class TriggerMode
 	: uint32_t {
 		StartThreshold_NSamples_AutoClose = 1, //
@@ -37,9 +37,14 @@ struct HouseKeepingData {
 struct Event {
 	uint8_t ch;
 	uint64_t timeTag;
-	uint32_t triggerCount;
-	uint32_t livetime;
+	uint16_t triggerCount;
 	uint16_t phaMax;
+	uint16_t phaMaxTime;
+	uint16_t phaMin;
+	uint16_t phaFirst;
+	uint16_t phaLast;
+	uint16_t maxDerivative;
+	uint16_t baseline;
 	uint16_t nSamples;
 	uint16_t* waveform;
 };
@@ -50,4 +55,4 @@ enum class ADCClockFrequency
 };
 }
 
-#endif /* SPACEFIBREADC_TYPES_HH_ */
+#endif /* GROWTH_FY2015_ADC_TYPES_HH_ */

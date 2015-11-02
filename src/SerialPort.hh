@@ -27,7 +27,7 @@
 class SerialPortException: public CxxUtilities::Exception {
 public:
 	enum {
-		Timeout, SerialPortClosed
+		Timeout, SerialPortClosed, TooLargeDataReceived
 	};
 
 public:
@@ -42,6 +42,8 @@ public:
 			return "Timeout";
 		case SerialPortClosed:
 			return "SerialPortClosed";
+		case TooLargeDataReceived:
+			return "TooLargeDataReceived";
 		default:
 			return "UndefinedException";
 		}
@@ -206,6 +208,13 @@ public:
 			_SerialPort_receive_loop: //
 			receiveWithTimeout(boost::asio::buffer((uint8_t*) data + readDoneLength, remainingLength), nReceivedBytes,
 					timeoutDurationObject);
+
+			if (nReceivedBytes > length) {
+				using namespace std;
+				cerr << "SerialPort::receive(): too long data (" << nReceivedBytes << " bytes) received against specified "
+						<< length << " bytes" << endl;
+				throw SerialPortException(SerialPortException::TooLargeDataReceived);
+			}
 
 			if (waitUntilSpecifiedLengthCompletes == false) {
 				return nReceivedBytes;

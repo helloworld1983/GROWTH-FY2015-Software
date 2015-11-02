@@ -29,7 +29,7 @@ public:
 	 * @return true if consumermanager block is in debug mode.
 	 */
 	static bool consumermanager() {
-		return true;
+		return false;
 	}
 	/** Returns if ring buffer block is in debug mode.
 	 * @return true if ring buffer block is in debug mode.

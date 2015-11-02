@@ -82,7 +82,7 @@ public:
 #else
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
 		EventListFileFITS* eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID,
-				this->configurationFile, adcBoard->getNSamplesInEventListFile());
+				this->configurationFile, adcBoard->getNSamplesInEventListFile(), this->exposureInSec);
 #endif
 		cout << "Output file name: " << outputFileName << endl;
 
@@ -141,7 +141,7 @@ public:
 #endif
 		uint32_t elapsedTime = 0;
 		while (elapsedTime < this->exposureInSec) {
-			std::vector<SpaceFibreADC::Event*> events = adcBoard->getEvent();
+			std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
 			cout << "Received " << events.size() << " events" << endl;
 			eventListFile->fillEvents(events);
 #ifdef USE_ROOT

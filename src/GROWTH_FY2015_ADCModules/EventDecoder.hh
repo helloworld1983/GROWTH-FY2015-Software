@@ -8,7 +8,7 @@
 #ifndef EVENTDECODER_HH_
 #define EVENTDECODER_HH_
 
-#include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
+#include "GROWTH_FY2015_ADCModules/Types.hh"
 #include <queue>
 #include <stack>
 
@@ -18,45 +18,44 @@
 class EventDecoder {
 private:
 	struct RawEvent {
-		uint16_t flag_FFF0;
-		uint16_t ch;
-		uint16_t consumerID;
-		uint16_t phaMax;
-		uint16_t timeH;
+		uint8_t ch;
+		uint8_t timeH;
 		uint16_t timeM;
 		uint16_t timeL;
-		uint16_t triggerCountH;
-		uint16_t triggerCountL;
+		uint16_t triggerCount;
+		uint16_t phaMax;
+		uint16_t phaMaxTime;
+		uint16_t phaMin;
+		uint16_t phaFirst;
+		uint16_t phaLast;
+		uint16_t maxDerivative;
 		uint16_t baseline;
-		uint16_t flag_FFF1;
 		uint16_t* waveform;
-		uint16_t flag_FFF2;
-		uint16_t flag_FFFF;
 	} rawEvent;
 
 private:
 	enum class EventDecoderState {
 		state_flag_FFF0,
-		state_ch,
-		state_consumerID,
+		state_ch_realtimeH,
+		state_realtimeM,
+		state_realtimeL,
+		state_reserved,
+		state_triggerCount,
 		state_phaMax,
-		state_timeH,
-		state_timeM,
-		state_timeL,
-		state_triggerCountH,
-		state_triggerCountL,
+		state_phaMaxTime,
+		state_phaMin,
+		state_phaFirst,
+		state_phaLast,
+		state_maxDerivative,
 		state_baseline,
-		state_flag_FFF1,
-		state_pha_list,
-		//state_flag_FFF2, not used in the switch statement
-		state_flag_FFFF
+		state_pha_list
 	};
 
 private:
 	EventDecoderState state;
-	std::vector<SpaceFibreADC::Event*> eventQueue;
+	std::vector<GROWTH_FY2015_ADC_Type::Event*> eventQueue;
 	std::vector<uint16_t> readDataUint16Array;
-	std::stack<SpaceFibreADC::Event*> eventInstanceResavoir;
+	std::stack<GROWTH_FY2015_ADC_Type::Event*> eventInstanceResavoir;
 	size_t waveformLength;
 
 public:
@@ -71,7 +70,7 @@ public:
 public:
 	virtual ~EventDecoder() {
 		while (eventInstanceResavoir.size() != 0) {
-			SpaceFibreADC::Event* event = eventInstanceResavoir.top();
+			GROWTH_FY2015_ADC_Type::Event* event = eventInstanceResavoir.top();
 			eventInstanceResavoir.pop();
 			delete event->waveform;
 			delete event;
@@ -106,76 +105,84 @@ public:
 		}
 
 		//decode the data
+		//event packet format version 20151016
 		for (size_t i = 0; i < size_half; i++) {
 			switch (state) {
 			case EventDecoderState::state_flag_FFF0:
 				waveformLength = 0;
 				if (readDataUint16Array[i] == 0xfff0) {
-					state = EventDecoderState::state_ch;
+					state = EventDecoderState::state_ch_realtimeH;
 				} else {
 					cerr << "EventDecoder::decodeEvent(): invalid start flag (" << "0x" << hex << right << setw(4) << setfill('0')
 							<< (uint32_t) readDataUint16Array[i] << ")" << endl;
 				}
 				break;
-			case EventDecoderState::state_ch:
-				rawEvent.ch = readDataUint16Array[i];
-				state = EventDecoderState::state_consumerID;
+			case EventDecoderState::state_ch_realtimeH:
+				rawEvent.ch = (readDataUint16Array[i] & 0xFF00) >> 8;
+				rawEvent.timeH = readDataUint16Array[i] & 0xFF;
+				state = EventDecoderState::state_realtimeM;
 				break;
-			case EventDecoderState::state_consumerID:
-				rawEvent.consumerID = readDataUint16Array[i];
+			case EventDecoderState::state_realtimeM:
+				rawEvent.timeM = readDataUint16Array[i];
+				state = EventDecoderState::state_realtimeL;
+				break;
+			case EventDecoderState::state_realtimeL:
+				rawEvent.timeL = readDataUint16Array[i];
+				state = EventDecoderState::state_reserved;
+				break;
+			case EventDecoderState::state_reserved:
+				state = EventDecoderState::state_triggerCount;
+				break;
+			case EventDecoderState::state_triggerCount:
+				rawEvent.triggerCount = readDataUint16Array[i];
 				state = EventDecoderState::state_phaMax;
 				break;
 			case EventDecoderState::state_phaMax:
 				rawEvent.phaMax = readDataUint16Array[i];
-				state = EventDecoderState::state_timeH;
+				state = EventDecoderState::state_phaMaxTime;
 				break;
-			case EventDecoderState::state_timeH:
-				rawEvent.timeH = readDataUint16Array[i];
-				state = EventDecoderState::state_timeM;
+			case EventDecoderState::state_phaMaxTime:
+				rawEvent.phaMaxTime = readDataUint16Array[i];
+				state = EventDecoderState::state_phaMin;
 				break;
-			case EventDecoderState::state_timeM:
-				rawEvent.timeM = readDataUint16Array[i];
-				state = EventDecoderState::state_timeL;
+			case EventDecoderState::state_phaMin:
+				rawEvent.phaMin = readDataUint16Array[i];
+				state = EventDecoderState::state_phaFirst;
 				break;
-			case EventDecoderState::state_timeL:
-				rawEvent.timeL = readDataUint16Array[i];
-				state = EventDecoderState::state_triggerCountH;
+			case EventDecoderState::state_phaFirst:
+				rawEvent.phaFirst = readDataUint16Array[i];
+				state = EventDecoderState::state_phaLast;
 				break;
-			case EventDecoderState::state_triggerCountH:
-				rawEvent.triggerCountH = readDataUint16Array[i];
-				state = EventDecoderState::state_triggerCountL;
+			case EventDecoderState::state_phaLast:
+				rawEvent.phaLast = readDataUint16Array[i];
+				state = EventDecoderState::state_maxDerivative;
 				break;
-			case EventDecoderState::state_triggerCountL:
-				rawEvent.triggerCountL = readDataUint16Array[i];
+			case EventDecoderState::state_maxDerivative:
+				rawEvent.maxDerivative = readDataUint16Array[i];
 				state = EventDecoderState::state_baseline;
 				break;
 			case EventDecoderState::state_baseline:
 				rawEvent.baseline = readDataUint16Array[i];
-				state = EventDecoderState::state_flag_FFF1;
-				break;
-			case EventDecoderState::state_flag_FFF1:
-				if (readDataUint16Array[i] == 0xfff1) {
-					state = EventDecoderState::state_pha_list;
-				}
+				state = EventDecoderState::state_pha_list;
 				break;
 			case EventDecoderState::state_pha_list:
-				if (readDataUint16Array[i] == 0xfff2) {
-					state = EventDecoderState::state_flag_FFFF;
+				if (readDataUint16Array[i] == 0xFFFF) {
+					//push GROWTH_FY2015_ADC_Type::Event to a queue
+					pushEventToQueue();
+					//move to the idle state
+					state = EventDecoderState::state_flag_FFF0;
+					break;
 				} else {
-					rawEvent.waveform[waveformLength] = readDataUint16Array[i];
-					waveformLength++;
+					if (SpaceFibreADC::MaxWaveformLength <= waveformLength) {
+						cerr
+								<< "EventDecoder::decodeEvent(): waveform too long. something is wrong with data transfer. Return to the idle state."
+								<< endl;
+						state = EventDecoderState::state_flag_FFF0;
+					} else {
+						rawEvent.waveform[waveformLength] = readDataUint16Array[i];
+						waveformLength++;
+					}
 				}
-				break;
-			case EventDecoderState::state_flag_FFFF:
-				//if (0 <= ch && ch < SpaceWireADCBox::NumberOfChannels) {
-				//tree->SetBranchAddress("pha_list", &(waveforms[ch]->at(0)));
-				//}
-
-				//push SpaceFibreADC::Event to a queue
-				pushEventToQueue();
-
-				//move to the idle state
-				state = EventDecoderState::state_flag_FFF0;
 				break;
 			}
 		}
@@ -187,7 +194,7 @@ public:
 private:
 	void prepareEventInstances() {
 		for (size_t i = 0; i < InitialEventInstanceNumber; i++) {
-			SpaceFibreADC::Event* event = new SpaceFibreADC::Event;
+			GROWTH_FY2015_ADC_Type::Event* event = new GROWTH_FY2015_ADC_Type::Event;
 			event->waveform = new uint16_t[SpaceFibreADC::MaxWaveformLength];
 			eventInstanceResavoir.push(event);
 		}
@@ -195,9 +202,9 @@ private:
 
 public:
 	void pushEventToQueue() {
-		SpaceFibreADC::Event* event;
+		GROWTH_FY2015_ADC_Type::Event* event;
 		if (eventInstanceResavoir.size() == 0) {
-			event = new SpaceFibreADC::Event;
+			event = new GROWTH_FY2015_ADC_Type::Event;
 			//debug dump
 			if (Debug::eventdecoder()) {
 				using namespace std;
@@ -213,10 +220,14 @@ public:
 		event->timeTag = (static_cast<uint64_t>(rawEvent.timeH) << 32) + (static_cast<uint64_t>(rawEvent.timeM) << 16)
 				+ (rawEvent.timeL);
 		event->phaMax = rawEvent.phaMax;
+		event->phaMaxTime = rawEvent.phaMaxTime;
+		event->phaMin = rawEvent.phaMin;
+		event->phaFirst = rawEvent.phaFirst;
+		event->phaLast = rawEvent.phaLast;
+		event->maxDerivative = rawEvent.maxDerivative;
+		event->baseline = rawEvent.baseline;
 		event->nSamples = waveformLength;
-		event->livetime = 0; //todo: implement event livetime
-		event->triggerCount = ((static_cast<uint32_t>(rawEvent.triggerCountH)) << 16)
-				+ (static_cast<uint32_t>(rawEvent.triggerCountL));
+		event->triggerCount = rawEvent.triggerCount;
 
 		//copy waveform
 		for (size_t i = 0; i < waveformLength; i++) {
@@ -229,11 +240,11 @@ public:
 public:
 	/** Returns decoded event queue (as std::vecotr).
 	 * After used in user application, decoded events should be freed
-	 * via EventDecoder::freeEvent(SpaceFibreADC::Event* event).
+	 * via EventDecoder::freeEvent(GROWTH_FY2015_ADC_Type::Event* event).
 	 * @return std::queue containing pointers to decoded events
 	 */
-	std::vector<SpaceFibreADC::Event*> getDecodedEvents() {
-		std::vector<SpaceFibreADC::Event*> eventQueueCopied = eventQueue;
+	std::vector<GROWTH_FY2015_ADC_Type::Event*> getDecodedEvents() {
+		std::vector<GROWTH_FY2015_ADC_Type::Event*> eventQueueCopied = eventQueue;
 		eventQueue.clear();
 		return eventQueueCopied;
 	}
@@ -242,7 +253,7 @@ public:
 	/** Frees event instance so that buffer area can be reused in the following commands.
 	 * @param event event instance to be freed
 	 */
-	void freeEvent(SpaceFibreADC::Event* event) {
+	void freeEvent(GROWTH_FY2015_ADC_Type::Event* event) {
 		eventInstanceResavoir.push(event);
 	}
 
@@ -263,42 +274,46 @@ public:
 		case EventDecoderState::state_flag_FFF0:
 			result = "state_flag_FFF0";
 			break;
-		case EventDecoderState::state_ch:
-			result = "state_ch";
+		case EventDecoderState::state_ch_realtimeH:
+			result = "state_ch_realtimeH";
 			break;
-		case EventDecoderState::state_consumerID:
-			result = "state_consumerID";
+		case EventDecoderState::state_realtimeM:
+			result = "state_realtimeM";
+			break;
+		case EventDecoderState::state_realtimeL:
+			result = "state_realtimeL";
+			break;
+		case EventDecoderState::state_reserved:
+			result = "state_reserved";
+			break;
+		case EventDecoderState::state_triggerCount:
+			result = "state_triggerCount";
 			break;
 		case EventDecoderState::state_phaMax:
 			result = "state_phaMax";
 			break;
-		case EventDecoderState::state_timeH:
-			result = "state_timeH";
+		case EventDecoderState::state_phaMaxTime:
+			result = "state_phaMaxTime";
 			break;
-		case EventDecoderState::state_timeM:
-			result = "state_timeM";
+		case EventDecoderState::state_phaMin:
+			result = "state_phaMin";
 			break;
-		case EventDecoderState::state_timeL:
-			result = "state_timeL";
+		case EventDecoderState::state_phaFirst:
+			result = "state_phaFirst";
 			break;
-		case EventDecoderState::state_triggerCountH:
-			result = "state_triggerCountH";
+		case EventDecoderState::state_phaLast:
+			result = "state_phaLast";
 			break;
-		case EventDecoderState::state_triggerCountL:
-			result = "state_triggerCountL";
+		case EventDecoderState::state_maxDerivative:
+			result = "state_maxDerivative";
 			break;
 		case EventDecoderState::state_baseline:
 			result = "state_baseline";
 			break;
-		case EventDecoderState::state_flag_FFF1:
-			result = "state_flag_FFF1";
-			break;
 		case EventDecoderState::state_pha_list:
 			result = "state_pha_list";
 			break;
-		case EventDecoderState::state_flag_FFFF:
-			result = "state_flag_FFFF";
-			break;
+
 		default:
 			result = "Undefined status";
 			break;
