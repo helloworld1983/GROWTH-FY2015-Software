@@ -11,6 +11,8 @@ install: all
 	@if [ ! -f $(INSTALL_PREFIX)/bin ]; then mkdir -p $(INSTALL_PREFIX)/bin; fi
 	cp growth_fy2015_adc_measure_exposure $(INSTALL_PREFIX)/bin
 	cp test_readADC $(INSTALL_PREFIX)/bin
+	cp ../scripts/hv*sh $(INSTALL_PREFIX)/bin
+	cp ../scripts/fpga*sh $(INSTALL_PREFIX)/bin
 
 CXX=g++-4.8 -std=c++11
 
