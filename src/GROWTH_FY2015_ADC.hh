@@ -239,6 +239,13 @@ public:
 	//Clock Interval
 	static constexpr double ClockInterval = 10e-9; //s
 
+	//FPGA TimeTag
+	static const uint32_t TimeTagResolutionInNanoSec = 10;//ns
+
+	//PHA Min/Max
+	static const uint16_t PHAMinimum = 0;
+	static const uint16_t PHAMaximum = 1023;
+
 private:
 	RMAPHandler* rmapHandler;
 	RMAPTargetNode* adcRMAPTargetNode;
@@ -247,7 +254,7 @@ private:
 	ConsumerManagerEventFIFO* consumerManager;
 	ChannelModule* channelModules[SpaceFibreADC::NumberOfChannels];
 	EventDecoder* eventDecoder;
-	GROWTH_FY2015_ADCDumpThread* dumpThread;
+	//GROWTH_FY2015_ADCDumpThread* dumpThread;
 
 public:
 	size_t nReceivedEvents = 0;
@@ -309,11 +316,12 @@ public:
 	~GROWTH_FY2015_ADC() {
 		using namespace std;
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deconstructing GROWTH_FY2015_ADC instance." << endl;
-		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Stopping dump thread." << endl;
-		if (this->dumpThread != NULL && this->dumpThread->isInRunMethod()) {
-			this->dumpThread->stop();
-			delete this->dumpThread;
-		}
+		/*
+		 cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Stopping dump thread." << endl;
+		 if (this->dumpThread != NULL && this->dumpThread->isInRunMethod()) {
+		 this->dumpThread->stop();
+		 delete this->dumpThread;
+		 }*/
 
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting RMAP Handler." << endl;
 		delete rmapIniaitorForGPSRegisterAccess;
@@ -425,11 +433,11 @@ public:
 		try {
 			cout << "#stopping event data output" << endl;
 			consumerManager->disableEventDataOutput();
-			cout << "#stopping dump thread" << endl;
-			consumerManager->stopDumpThread();
-			if (this->dumpThread != NULL) {
-				this->dumpThread->stop();
-			}
+			//cout << "#stopping dump thread" << endl;
+			//consumerManager->stopDumpThread();
+			//if (this->dumpThread != NULL) {
+			//	this->dumpThread->stop();
+			//}
 			cout << "#closing sockets" << endl;
 			consumerManager->closeSocket();
 			cout << "#disconnecting SpaceWire-to-GigabitEther" << endl;
