@@ -4,6 +4,8 @@ CFITSIO_SRC = cfitsio3370.tar.gz
 #============================================
 all: \
 	growth_fy2015_adc_measure_exposure \
+	growth_fy2015_adc_measure_exposure_root \
+	growth_fy2015_adc_measure_exposure_gui \
 	test_serial \
 	test_serial_ssdtp \
 	test_serial_receive \
@@ -17,7 +19,7 @@ all: \
 ROOT_LIBS = $(shell root-config --glibs)
 ROOT_CFLAGS = $(shell root-config --cflags)
 
-CXXFLAGS = -I. -I../include -I./yaml-cpp/include
+CXXFLAGS = -I. -I../include -I./yaml-cpp/include $(DEFINE)
 LDFLAGS = -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a -lcfitsio
 
 #---------------------------------------------
@@ -57,7 +59,12 @@ test_rmaphandler: test_rmaphandler.cc
 	
 growth_fy2015_adc_measure_exposure: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
 	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
-	
+
+growth_fy2015_adc_measure_exposure_root: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
+	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -DUSE_ROOT=1 -o $@
+
+growth_fy2015_adc_measure_exposure_gui: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
+	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -DDRAW_CANVAS=1 -o $@
 #============================================
 # External libraries
 #============================================
