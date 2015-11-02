@@ -6,13 +6,15 @@
  */
 
 #include "GROWTH_FY2015_ADC.hh"
-#include "EventListFileROOT.hh"
 #include "EventListFileFITS.hh"
 #ifdef USE_ROOT
+#include "EventListFileROOT.hh"
+#include "TH1D.h"
 #include "TFile.h"
 #endif
 #ifdef DRAW_CANVAS
 #include "TH1D.h"
+#include "TFile.h"
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TROOT.h"
@@ -36,19 +38,32 @@ public:
 		this->configurationFile = configurationFile;
 	}
 
-public:
+private:
+	GROWTH_FY2015_ADC* adcBoard;
+	CxxUtilities::Condition c;
+	size_t nEvents = 0;
+#ifdef DRAW_CANVAS
+	TCanvas* canvas;
+	TH1D* hist;
+	size_t canvasUpdateCounter;
+	const size_t canvasUpdateCounterMax = 10;
+#endif
+#ifdef USE_ROOT
+	EventListFileROOT* eventListFile;
+#else
+	EventListFileFITS* eventListFile;
+#endif
 
 public:
 	void run() {
 		using namespace std;
-		CxxUtilities::Condition c;
-		auto adcBoard = new GROWTH_FY2015_ADC(deviceName);
+		adcBoard = new GROWTH_FY2015_ADC(deviceName);
 
 #ifdef DRAW_CANVAS
 		//---------------------------------------------
 		// Run ROOT eventloop
 		//---------------------------------------------
-		TCanvas* canvas = new TCanvas("c", "c", 500, 500);
+		canvas = new TCanvas("c", "c", 500, 500);
 		canvas->Draw();
 		canvas->SetLogy();
 #endif
@@ -80,11 +95,11 @@ public:
 		std::string outputFileName;
 #ifdef USE_ROOT
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
-		EventListFileROOT* eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile );
+		eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile );
 #else
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
-		EventListFileFITS* eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID,
-				this->configurationFile, adcBoard->getNSamplesInEventListFile(), this->exposureInSec);
+		eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID, this->configurationFile,
+				adcBoard->getNSamplesInEventListFile(), this->exposureInSec);
 #endif
 		cout << "Output file name: " << outputFileName << endl;
 
@@ -105,74 +120,27 @@ public:
 		eventListFile->fillGPSTime(adcBoard->getGPSRegisterUInt8());
 
 		//---------------------------------------------
-		// Read status
-		//---------------------------------------------
-		int debugChannel = 3;
-
-		ChannelModule* channelModule = adcBoard->getChannelRegister(debugChannel);
-		printf("Debugging Ch.%d\n", debugChannel);
-		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
-		printf("Livetime     = %d\n", channelModule->getLivetime());
-		printf("TriggerMode  = %d\n", channelModule->getTriggerMode());
-		cout << channelModule->getStatus() << endl;
-
-		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(AddressOf_EventFIFO_DataCountRegister);
-		printf("EventFIFO Count = %zu\n", eventFIFODataCount);
-		printf("TriggerCount = %zu\n", channelModule->getTriggerCount());
-		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
-
-		//---------------------------------------------
 		// Read events
 		//---------------------------------------------
-		size_t nEvents = 0;
-
 #ifdef DRAW_CANVAS
-		TH1D* hist = new TH1D("h", "Histogram", 1024, 0, 1024);
-#endif
-
-#ifdef DRAW_CANVAS
+		hist = new TH1D("h", "Histogram", 1024, 0, 1024);
 		hist->GetXaxis()->SetRangeUser(480, 1024);
 		hist->GetXaxis()->SetTitle("ADC Channel");
 		hist->GetYaxis()->SetTitle("Counts");
 		hist->Draw();
 		canvas->Update();
-//	RootEventLoop eventloop(app);
-//	eventloop.start();
-
-		size_t canvasUpdateCounter = 0;
-		const size_t canvasUpdateCounterMax = 10;
+		canvasUpdateCounter = 0;
 #endif
+
 		uint32_t elapsedTime = 0;
+		size_t nReceivedEvents = 0;
 		while (elapsedTime < this->exposureInSec) {
-			std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
-			cout << "Received " << events.size() << " events" << endl;
-			eventListFile->fillEvents(events);
-#ifdef DRAW_CANVAS
-			cout << "Filling to hitoram" << endl;
-			for (auto event : events) {
-				hist->Fill(event->phaMax);
+			nReceivedEvents = readAndThenSaveEvents();
+			if (nReceivedEvents == 0) {
+				c.wait(50);
 			}
-#endif
-			nEvents += events.size();
-			cout << events.size() << " events (" << nEvents << ")" << endl;
-			adcBoard->freeEvents(events);
-			c.wait(50);
-
-#ifdef DRAW_CANVAS
-			canvasUpdateCounter++;
-			if (canvasUpdateCounter == canvasUpdateCounterMax) {
-				cout << "Update canvas." << endl;
-				canvasUpdateCounter = 0;
-				hist->Draw();
-				canvas->Update();
-			}
-#endif
 			elapsedTime = CxxUtilities::Time::getUNIXTimeAsUInt32() - startTime_unixTime;
 		}
-
-		cout << "Saving event list" << endl;
-		eventListFile->close();
-		//delete eventListFile;
 
 #ifdef DRAW_CANVAS
 		cout << "Saving histogram" << endl;
@@ -182,7 +150,14 @@ public:
 		file->Close();
 #endif
 
+		//stop acquisition first
 		adcBoard->stopAcquisition();
+
+		//completely read the EventFIFO
+		readAndThenSaveEvents();
+		cout << "Saving event list" << endl;
+		eventListFile->close();
+
 		adcBoard->closeDevice();
 		cout << "Waiting child threads to be finalized..." << endl;
 		c.wait(1000);
@@ -190,6 +165,56 @@ public:
 		delete adcBoard;
 	}
 
+private:
+	size_t readAndThenSaveEvents() {
+		using namespace std;
+		std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
+		cout << "Received " << events.size() << " events" << endl;
+		eventListFile->fillEvents(events);
+
+#ifdef DRAW_CANVAS
+		cout << "Filling to hitoram" << endl;
+		for (auto event : events) {
+			hist->Fill(event->phaMax);
+		}
+#endif
+
+		size_t nReceivedEvents = events.size();
+		nEvents += nReceivedEvents;
+		cout << events.size() << " events (" << nEvents << ")" << endl;
+		adcBoard->freeEvents(events);
+
+#ifdef DRAW_CANVAS
+		canvasUpdateCounter++;
+		if (canvasUpdateCounter == canvasUpdateCounterMax) {
+			cout << "Update canvas." << endl;
+			canvasUpdateCounter = 0;
+			hist->Draw();
+			canvas->Update();
+		}
+#endif
+
+		return nReceivedEvents;
+	}
+
+private:
+	void debug_readStatus(int debugChannel = 3) {
+		using namespace std;
+		//---------------------------------------------
+		// Read status
+		//---------------------------------------------
+		ChannelModule* channelModule = adcBoard->getChannelRegister(debugChannel);
+		printf("Debugging Ch.%d\n", debugChannel);
+		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
+		printf("Livetime     = %d\n", channelModule->getLivetime());
+		cout << channelModule->getStatus() << endl;
+
+		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(AddressOf_EventFIFO_DataCountRegister);
+		printf("EventFIFO Count = %zu\n", eventFIFODataCount);
+		printf("TriggerCount = %zu\n", channelModule->getTriggerCount());
+		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
+
+	}
 };
 
 int main(int argc, char* argv[]) {

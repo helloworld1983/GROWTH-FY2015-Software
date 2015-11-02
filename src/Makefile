@@ -1,95 +1,10 @@
+all:
+	@echo "1. Build external libraries by executing 'make prepare_external_libs'"
+	@echo "2. Execute 'make -f Makefile.mac -j4' (Mac) or 'make -f Makefile.pi -j4' (Raspberry Pi)"
+	@echo "   Alternatively, 'make mac' and 'make pi' are also available." 
 
-CFITSIO_SRC = cfitsio3370.tar.gz
+mac:
+	make -f Makefile.mac -j4
 
-#============================================
-all: \
-	growth_fy2015_adc_measure_exposure \
-	growth_fy2015_adc_measure_exposure_root \
-	growth_fy2015_adc_measure_exposure_gui \
-	test_serial \
-	test_serial_ssdtp \
-	test_serial_receive \
-	test_rmap_to_fpga \
-	test_growth_fy2015_adc_cpuTrigger \
-	test_growth_fy2015_adc_loadConfigurationFile \
-	test_rmaphandler 
-#	test_readADC \
-#	test_setDAC \
-
-ROOT_LIBS = $(shell root-config --glibs)
-ROOT_CFLAGS = $(shell root-config --cflags)
-
-CXXFLAGS = -I. -I../include -I./yaml-cpp/include $(DEFINE)
-LDFLAGS = -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a -lcfitsio
-
-#---------------------------------------------
-# Raspberry Pi applications
-#---------------------------------------------
-test_readADC: test_readADC.cc
-	$(CXX) -std=c++11 -stdlib=libc++ $^ -lwiringPi -I../include -I../include/wiringPi
-
-test_setDAC: test_setDAC.cc
-	$(CXX) -std=c++11 -stdlib=libc++ $^ -lwiringPi -I../include -I../include/wiringPi
-	
-test_serial: test_serial.cc
-	$(CXX) -std=c++11 -stdlib=libc++ $^ -I../include -lboost_system -lboost_thread-mt -o $@
-
-#---------------------------------------------
-# Generic applications
-#---------------------------------------------
-test_serial_ssdtp: test_serial_ssdtp.cc
-	$(CXX) -std=c++11 -stdlib=libc++ $^ -I../include -lboost_system -lboost_thread-mt -o $@
-	
-test_serial_receive: test_serial_receive.cc
-	$(CXX) -std=c++11 -stdlib=libc++ $^ -I../include -lboost_system -lboost_thread-mt -o $@
-
-test_rmap_to_fpga: test_rmap_to_fpga.cc
-	$(CXX) -g -std=c++11 -stdlib=libc++ $^ -I../include -lboost_system -lboost_thread-mt -o $@ -lxerces-c
-	
-#---------------------------------------------
-# Mac applictions
-#---------------------------------------------
-test_growth_fy2015_adc_cpuTrigger: test_growth_fy2015_adc_cpuTrigger.cc GROWTH_FY2015_ADC.hh
-	$(CXX) -g -std=c++11 -stdlib=libc++ test_growth_fy2015_adc_cpuTrigger.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
-
-test_growth_fy2015_adc_loadConfigurationFile: test_growth_fy2015_adc_loadConfigurationFile.cc GROWTH_FY2015_ADC.hh
-	$(CXX) -g -std=c++11 -stdlib=libc++ test_growth_fy2015_adc_loadConfigurationFile.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
-test_rmaphandler: test_rmaphandler.cc
-	$(CXX) -g -std=c++11 -stdlib=libc++ $^ $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@ 
-	
-growth_fy2015_adc_measure_exposure: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
-	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
-
-growth_fy2015_adc_measure_exposure_root: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
-	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -DUSE_ROOT=1 -o $@
-
-growth_fy2015_adc_measure_exposure_gui: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
-	$(CXX) -g -std=c++11 -stdlib=libc++ main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -DDRAW_CANVAS=1 -o $@
-#============================================
-# External libraries
-#============================================
-prepare_external_libs: build_yaml_cpp build_cfitsio
-	
-clean_external_libs:
-	rm -rf cfitsio yaml-cpp
-	
-#============================================
-# yaml-cpp
-#============================================
-get_yaml_cpp:
-	bash -c "if [ ! -d yaml-cpp ]; then git clone https://github.com/jbeder/yaml-cpp; fi"
-yaml_cpp: get_yaml_cpp
-build_yaml_cpp: yaml_cpp
-	cd yaml-cpp; bash -c "if [ ! -d build ]; then mkdir build; fi"; \
-	cd build; cmake .. -DCMAKE_INSTALL_PREFIX=`pwd` > log_cmake; \
-	make -j4 > log_make; make install > log_make_install
-
-#============================================
-# cfitsio
-#============================================
-get_cfitsio:
-	curl -O "ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/$(CFITSIO_SRC)"
-	tar zxf $(CFITSIO_SRC)
-cfitsio: get_cfitsio
-build_cfitsio: cfitsio
-	cd cfitsio; ./configure --prefix=`pwd` > log_configure; make -j4 > log_make; make install > log_make_install
+pi:
+	make -f Makefile.pi -j4
