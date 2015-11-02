@@ -22,7 +22,7 @@ endif
 CXXFLAGS = -I. -I../include -I./yaml-cpp/include -I$(HOME)/work/install/include -Icfitsio/include
 LDFLAGS = -lpthread -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a -Lcfitsio/lib -lcfitsio
 
-CXXFLAGS_PI = -lwiringPi -I../include/wiringPi
+CXXFLAGS_PI = -lwiringPi -I../include/wiringPi -DRASPBERRY_PI
 
 CXXFLAGS =  -std=c++11 $(CXXFLAGS_PI) -I. -I../include -I./yaml-cpp/include -I$(HOME)/work/install/include -Icfitsio/include -O3
 LDFLAGS = -lboost_system -lboost_thread-mt -lxerces-c yaml-cpp/build/lib/libyaml-cpp.a -Lcfitsio/lib -lcfitsio -L$(HOME)/work/install/lib -lpthread
