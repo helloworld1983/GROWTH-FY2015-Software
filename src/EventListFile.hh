@@ -35,6 +35,9 @@ public:
 
 public:
 	virtual void close() =0;
+
+public:
+	virtual void fillGPSTime(uint8_t* gpsTimeRegisterBuffer) =0;
 };
 
 #endif /* EVENTLISTFILE_HH_ */
