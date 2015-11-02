@@ -12,7 +12,7 @@ extern "C" {
 }
 
 #include "CxxUtilities/FitsUtility.hh"
-
+#include "GROWTH_FY2015_ADC.hh"
 #include "EventListFile.hh"
 
 class EventListFileFITS: public EventListFile {
@@ -127,7 +127,7 @@ private:
 		rowIndex = 0;
 		rowIndex_GPS = 0;
 
-		size_t nColumns=nColumns_Event;
+		size_t nColumns = nColumns_Event;
 
 		if (nSamples == 0) {
 			nColumns--; //delete waveform column
@@ -198,7 +198,15 @@ private:
 						&fitsStatus) || //
 				//nSamples
 				fits_update_key_lng(outputFile, n = (char*) "NSAMPLES", NSAMPLES, "nSamples", &fitsStatus) || //
-				//detectorID
+				//timeTagResolution
+				fits_update_key_lng(outputFile, n = (char*) "TIMERES", GROWTH_FY2015_ADC::TimeTagResolutionInNanoSec,
+						"timeTagResolution in nano second", &fitsStatus) || //
+				//PHA min/max
+				fits_update_key_lng(outputFile, n = (char*) "PHA_MIN", GROWTH_FY2015_ADC::PHAMinimum, "PHA range minimum",
+						&fitsStatus) || //
+				fits_update_key_lng(outputFile, n = (char*) "PHA_MAX", GROWTH_FY2015_ADC::PHAMaximum, "PHA range maximum",
+						&fitsStatus) || //
+				//exposure
 				fits_update_key_dbl(outputFile, n = (char*) "EXPOSURE", this->exposureInSec, 2,
 						"exposure specified via command line", &fitsStatus) //
 
