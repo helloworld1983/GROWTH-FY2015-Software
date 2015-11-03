@@ -17,6 +17,48 @@
 #include <errno.h>
 #include <string.h>
 
+/** Represents ADC data.
+ */
+class ADCData {
+public:
+	const size_t nTemperatureSensors = 4;
+	uint16_t temperature_raw[nTemperatureSensors];
+	double temperature[nTemperatureSensors];
+
+	const size_t nCurrentSensors = 2;
+	uint16_t current_raw[nCurrentSensors];
+	double current[nCurrentSensors];
+
+	const size_t nGeneralPurposeADC = 2;
+	uint16_t generalPurposeADC_raw[nGeneralPurposeADC];
+	double generalPurposeADC[nGeneralPurposeADC];
+
+public:
+	static std::string toString() {
+		using namespace std;
+		std::stringstream ss;
+		for (size_t i = 0; i < ADCData::nTemperatureSensors; i++) {
+			ss << temperature_raw[i] << " " << temperature[i];
+			if (i != ADCData::nTemperatureSensors - 1) {
+				ss << " ";
+			}
+		}
+		for (size_t i = 0; i <= ADCData::nCurrentSensors; i++) {
+			ss << current_raw[i] << " " << current[i];
+			if (i != ADCData::nCurrentSensors - 1) {
+				ss << " ";
+			}
+		}
+		for (size_t i = 0; i <= ADCData::nGeneralPurposeADC; i++) {
+			ss << generalPurposeADC_raw[i] << " " << generalPurposeADC[i];
+			if (i != ADCData::nGeneralPurposeADC - 1) {
+				ss << " ";
+			}
+		}
+		return ss.str();
+	}
+};
+
 /** Controls ADC/DAC function.
  */
 class ADCDAC {
@@ -117,14 +159,9 @@ public:
 		if (adcValue < 0) {
 			return adcValue;
 		}
-		float voltage = ((float) adcValue) / ADCMax * ADCVref;
-
-#ifdef DEBUG_WIRINGPI
-		printf("Voltage = %.3fV\n", voltage);
-#endif
 
 		//then to temperature
-		float temperature = (voltage - LM60Offset) / LM60Coefficient;
+		float temperature = this->convertToTemperature(adcValue);
 
 #ifdef DEBUG_WIRINGPI
 		printf("Temperature = %.2fdegC\n", temperature);
@@ -133,6 +170,28 @@ public:
 		return temperature;
 	}
 
+public:
+	static double convertToTemperature(uint16_t adcValue) {
+		float voltage = ((float) adcValue) / ADCMax * ADCVref;
+		float temperature = (voltage - LM60Offset) / LM60Coefficient;
+		return temperature;
+	}
+
+public:
+	static double convertToCurrent(uint16_t adcValue) {
+		float voltage = ((float) adcValue) / ADCMax * ADCVref;
+		float Vsense = voltage / (LT6106_Rout / LT6106_Rin);
+		float current = Vsense / LT6106_Rsense * 1000; //mA
+		return current;
+	}
+
+public:
+	static double convertToVoltage(uint16_t adcValue) {
+		float voltage = ((float) adcValue) / ADCMax * ADCVref;
+		return voltage;
+	}
+
+public:
 	static constexpr float LT6106_Rout = 10e3; //10kOhm
 	static constexpr float LT6106_Rin = 100; //100Ohm
 	static constexpr float LT6106_Rsense = 10e-3; //10mOhm
@@ -155,7 +214,6 @@ public:
 		if (adcValue < 0) {
 			return adcValue;
 		}
-		float voltage = ((float) adcValue) / ADCMax * ADCVref;
 
 #ifdef DEBUG_WIRINGPI
 		printf("Voltage = %.3fV\n", voltage);
@@ -164,9 +222,7 @@ public:
 		//Vout = Vsense*(Rout/Rin)
 		//Isense = Vsense/Rsense
 
-		//then to current
-		float Vsense = voltage / (LT6106_Rout / LT6106_Rin);
-		float current = Vsense / LT6106_Rsense * 1000; //mA
+		float current = this->convertToCurrent(adcValue);
 
 #ifdef DEBUG_WIRINGPI
 		printf("Current = %.3fmA\n", current);
@@ -284,6 +340,26 @@ public:
 		}
 
 		return Successful;
+	}
+
+public:
+	static ADCData getADCData() {
+		ADCData adcData;
+
+		for (size_t i = 0; i < ADCData::nTemperatureSensors; i++) {
+			adcData.temperature_raw[i] = ADCDAC::readADC(i);
+			adcData.temperature[i] = ADCDAC::convertToTemperature(adcData.temperature_raw[i]);
+		}
+		for (size_t i = 0; i <= ADCData::nCurrentSensors; i++) {
+			adcData.current_raw[i] = ADCDAC::readADC(i + 4);
+			adcData.current[i] = ADCDAC::convertToCurrent(adcData.current_raw[i]);
+		}
+		for (size_t i = 0; i <= ADCData::nGeneralPurposeADC; i++) {
+			adcData.generalPurposeADC_raw[i] = ADCDAC::readADC(i + 6);
+			adcData.generalPurposeADC[i] = ADCDAC::convertToVoltage(adcData.generalPurposeADC_raw[i]);
+		}
+
+		return adcData;
 	}
 };
 
