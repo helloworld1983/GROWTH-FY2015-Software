@@ -1,0 +1,17 @@
+##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1       localhost
+255.255.255.255	broadcasthost
+::1             localhost 
+fe80::1%lo0	    localhost
+133.11.165.11   galileo
+133.11.165.10   juno
+133.74.7.4      hikari
+133.74.7.5      yayoi
+133.74.7.57     suzaku
+192.168.1.200   ahdist
+133.74.7.13     galaxy
