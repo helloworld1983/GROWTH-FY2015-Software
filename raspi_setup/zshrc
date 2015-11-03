@@ -100,37 +100,6 @@ PROMPT='%n@'$MACHINE_NAME_COLOR'%m'$DEFAULT'[''%1~'$DEFAULT']%(!.#.$) '
 ##############################################
 
 #---------------------------------------------
-#secure shells - hongo
-#---------------------------------------------
-alias sshc="ssh yuasa@ceres.phys.s.u-tokyo.ac.jp -Y"
-alias sshg="ssh yuasa@galileo.phys.s.u-tokyo.ac.jp -Y"
-alias sshgal="ssh yuasa@galaxy.astro.isas.jaxa.jp"
-alias sshp="ssh yuasa@phobos -Y"
-alias sshj="ssh yuasa@juno -Y"
-alias sshjuno="ssh yuasa@juno -Y"
-alias sshd="ssh -Y yuasa@deimos.phys.s.u-tokyo.ac.jp"
-alias sshhy="ssh yuasa@hyperion -Y"
-alias sshr="ssh yuasa@rhea -Y"
-alias ssht="ssh yuasa@tethys -Y"
-
-#---------------------------------------------
-#secure shells - isas
-#---------------------------------------------
-alias sshh="ssh yuasa@hikari.astro.isas.jaxa.jp -Y"
-alias sshx="ssh yuasa@xray.astro.isas.jaxa.jp -Y"
-alias sshy="ssh yuasa@yayoi.astro.isas.jaxa.jp -Y"
-alias sshn="ssh yuasa@nozomi.astro.isas.jaxa.jp -Y"
-alias sshcos="ssh yuasa@cosmos1.astro.isas.jaxa.jp -Y"
-alias sshcos1="ssh yuasa@cosmos1.astro.isas.jaxa.jp -Y"
-alias sshcos2="ssh yuasa@cosmos2.astro.isas.jaxa.jp -Y"
-alias sshae="ssh -Y hxd@aelnx2.astro.isas.jaxa.jp"
-alias sshs="ssh yuasa@suzaku.astro.isas.jaxa.jp -Y"
-alias shs="ssh yuasa@suzaku.astro.isas.jaxa.jp -Y"
-alias sshah="ssh yuasa@ahproc.astro.isas.jaxa.jp -Y"
-alias ssha="ssh yuasa@ahproc.astro.isas.jaxa.jp -Y"
-alias sshytk="ssh pi@ytk.mydns.jp -Y"
-
-#---------------------------------------------
 # make
 #---------------------------------------------
 alias m4="make -j4"
@@ -320,81 +289,9 @@ alias pw="pwd"
 alias pd="pwd"
 
 #---------------------------------------------
-# terminals
-#---------------------------------------------
-alias gt="gnome-terminal&"
-alias gter="gt"
-alias gt4="gnome-terminal --geometry 80x20+10+0 & gnome-terminal --geometry 80x20+10+450 & gnome-terminal --geometry 80x20+720+0 & gnome-terminal --geometry 80x20+720+450 &"
-alias gt3="gnome-terminal --geometry 80x20+10+450 & gnome-terminal --geometry 80x20+720+0 & gnome-terminal --geometry 80x20+720+450 &"
-alias gt2="gnome-terminal --geometry 80x20+720+0 & gnome-terminal --geometry 80x20+720+450 &"
-
-#---------------------------------------------
 # applications
 #---------------------------------------------
 alias gp="gnuplot"
-alias ru=ruby
-alias gr=groovy
-alias jc=javac
-alias j=java
-
-#---------------------------------------------
-# path
-#---------------------------------------------
-if [ -d $HOME/Dropbox/bin ]; then
-export PATH=$HOME/Dropbox/bin:$PATH
-fi
-
-function addpath(){
- if [ _$1 = _ ]; then
-  newpath=`pwd`
- else
-  newpath=$1
- fi
- echo "$newpath was added to PATH..."
- export PATH=$newpath:$PATH
- if [ _$SPECIFIC_INITIALIZATION_FILE != _ ]; then
-  echo " " >> $SPECIFIC_INITIALIZATION_FILE
-  echo "#`date +'%Y%m%d_%H%M'`" >> $SPECIFIC_INITIALIZATION_FILE
-  echo "export PATH=$newpath:\$PATH" >> $SPECIFIC_INITIALIZATION_FILE
- fi
-}
-
-#add path bin/lib
-function addbinlib(){
- if [ _$1 = _ ]; then
-  newpath=`pwd`
- else
-  newpath=$1
- fi
- 
- if [ -d $newpath/bin ]; then
-  binpath=$newpath/bin
- else
-  binpath="none"
- fi
- 
- if [ -d $newpath/lib ]; then
-  libpath=$newpath/lib
- else
-  libpath="none"
- fi
- 
- if [ $binpath != "none" -a $libpath != "none" ]; then
-	 if [ _$SPECIFIC_INITIALIZATION_FILE != _ ]; then
-	  echo "$newpath/bin and $newpath/lib were added to PATH and LD_LIBRARY_PATH, respectively."
-	  export PATH=$binpath:$PATH
-	  export LD_LIBRARY_PATH=$libpath:$LD_LIBRARY_PATH
-	  #export DYLD_LIBRARY_PATH=$libpath:$DYLD_LIBRARY_PATH
-	  echo " " >> $SPECIFIC_INITIALIZATION_FILE
-	  echo "#`date +'%Y%m%d_%H%M'`" >> $SPECIFIC_INITIALIZATION_FILE
-	  echo "export PATH=$binpath:\$PATH" >> $SPECIFIC_INITIALIZATION_FILE
-	  echo "export LD_LIBRARY_PATH=$libpath:\$LD_LIBRARY_PATH" >> $SPECIFIC_INITIALIZATION_FILE
-	  #echo "export DYLD_LIBRARY_PATH=$libpath:\$DYLD_LIBRARY_PATH" >> $SPECIFIC_INITIALIZATION_FILE
-	 fi
- else
- 	echo "bin/ and lib/ were not found in $newpath..."
- fi
-}
 
 #---------------------------------------------
 # ls coloring
@@ -402,29 +299,6 @@ function addbinlib(){
 export LSCOLORS=gxfxxxxxcxxxxxxxxxgxgx
 export LS_COLORS='di=01;36:ln=01;35:ex=01;32'
 zstyle ':completion:*' list-colors 'di=36' 'ln=35' 'ex=32'
-
-#---------------------------------------------
-# get / upload
-#---------------------------------------------
-function getg(){
-if [ _$1 != _ ]; then
- scp -r galileo.phys.s.u-tokyo.ac.jp:$1 .
-fi
-}
-
-function geth(){
-if [ _$1 != _ ]; then
- scp -r hikari.astro.isas.jaxa.jp:$1 .
-fi
-}
-
-function getgal(){
-if [ _$1 != _ ]; then
- scp -r galaxy.astro.isas.jaxa.jp:$1 .
-fi
-}
-
-alias rs="rsync -auv "
 
 #---------------------------------------------
 # heasoft
@@ -437,35 +311,9 @@ alias xsl=xselect
 export PATH=$HOME/bin:$PATH
 
 alias du="du -h"
-
-alias v="cd ~/work/suzaku/v1223sgr"
-alias dr="cd ~/Dropbox"
-alias clang++="clang++ -std=c++11 -stdlib=libc++ "
-alias g++="clang++ -std=c++11 -stdlib=libc++ "
-
-export PATH=/Users/yuasa/Documents/work/eclipse/HongoScripts/bin:$PATH
-
 alias scp="scp -r"
-
+alias rs="rsync -auv "
 alias rmcmake="rm -rf CMakeFiles CMakeCache.txt cmake_install.cmake"
-
-
-alias clip="fc -ln -1 | pbcopy"
-alias h="cd ~/Desktop/hxicheck"
-
-alias tree="tree --charset unicode"
-
-function mkcd() {
-if [[ -d $1 ]]; then
-    echo "It already exsits! Cd to the directory."
-    cd $1
-else
-    echo "Created the directory and cd to it."
-    mkdir -p $1 && cd $1
-fi
-}
-
-alias cdmk=mkcd
 
 #############################################
 # Homebrew
