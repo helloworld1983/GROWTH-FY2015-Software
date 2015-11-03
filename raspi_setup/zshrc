@@ -1,0 +1,494 @@
+##############################################
+##############################################
+##############################################
+#
+# zsh intialization file
+#
+##############################################
+##############################################
+##############################################
+
+
+##############################################
+# Shell Environmental Variables
+##############################################
+export EDITOR="nano"
+export LC_CTYPE=ja_JP.UTF-8
+export LANG=ja_JP.UTF-8
+export LESSCHARSET=utf-8
+
+
+##############################################
+# zsh related
+##############################################
+setopt auto_pushd
+setopt pushd_ignore_dups
+setopt auto_cd
+HISTFILE=~/.zsh_histfile
+HISTSIZE=500000
+SAVEHIST=500000
+setopt share_history
+
+
+if [ -d $HOME/Dropbox/zshrc/completion ]; then
+	fpath=($HOME/Dropbox/zshrc/completion $fpath)
+fi
+
+autoload -U compinit
+compinit
+autoload history-search-end
+zle -N history-beginning-search-backward-end history-search-end
+zle -N history-beginning-search-forward-end history-search-end
+bindkey "^P" history-beginning-search-backward-end
+bindkey "^N" history-beginning-search-forward-end 
+bindkey "^H" kill-word
+setopt list_packed
+zstyle ':completion:*:default' menu select=1
+unsetopt promptcr
+
+#ignore case when searching
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+
+# cdr, add-zsh-hook を有効にする
+#autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
+#add-zsh-hook chpwd chpwd_recent_dirs
+ 
+# cdr の設定
+#zstyle ':completion:*' recent-dirs-insert both
+#zstyle ':chpwd:*' recent-dirs-max 500
+#zstyle ':chpwd:*' recent-dirs-default true
+#zstyle ':chpwd:*' recent-dirs-file "$HOME/.cache/shell/chpwd-recent-dirs"
+#zstyle ':chpwd:*' recent-dirs-pushd true
+
+
+##############################################
+# Prompt
+##############################################
+#export PS1='\u@\[\033[1;33m\]\h\[\033[0m\][\W]\$ '
+local GREEN=$'%{\e[1;32m%}'
+local YELLOW=$'%{\e[1;33m%}'
+local BLUE=$'%{\e[1;34m%}'
+local RED=$'%{\e[1;31m%}'
+local DEFAULT=$'%{\e[1;m%}'
+
+local MACHINE_NAME_COLOR=$YELLOW
+
+if [ `hostname -s` = hikari ]; then
+MACHINE_NAME_COLOR=$ORANGE
+fi
+if [ `hostname -s` = galaxy ]; then
+MACHINE_NAME_COLOR=$BLUE
+fi
+if [ `hostname -s` = xray ]; then
+MACHINE_NAME_COLOR=$GREEN
+fi
+if [ `hostname -s` = ahproc ]; then
+MACHINE_NAME_COLOR=$RED
+fi
+if [ `hostname -s` = suzaku ]; then
+MACHINE_NAME_COLOR=$RED
+fi
+
+PROMPT='%n@'$MACHINE_NAME_COLOR'%m'$DEFAULT'[''%1~'$DEFAULT']%(!.#.$) '
+
+#if [ `hostname -s` = hikari ]; then
+#PROMPT='%n@'$RED'%m'$DEFAULT'[%1~'$DEFAULT']%(!.#.$) '
+#fi
+
+##############################################
+# Alias commands
+##############################################
+
+#---------------------------------------------
+#secure shells - hongo
+#---------------------------------------------
+alias sshc="ssh yuasa@ceres.phys.s.u-tokyo.ac.jp -Y"
+alias sshg="ssh yuasa@galileo.phys.s.u-tokyo.ac.jp -Y"
+alias sshgal="ssh yuasa@galaxy.astro.isas.jaxa.jp"
+alias sshp="ssh yuasa@phobos -Y"
+alias sshj="ssh yuasa@juno -Y"
+alias sshjuno="ssh yuasa@juno -Y"
+alias sshd="ssh -Y yuasa@deimos.phys.s.u-tokyo.ac.jp"
+alias sshhy="ssh yuasa@hyperion -Y"
+alias sshr="ssh yuasa@rhea -Y"
+alias ssht="ssh yuasa@tethys -Y"
+
+#---------------------------------------------
+#secure shells - isas
+#---------------------------------------------
+alias sshh="ssh yuasa@hikari.astro.isas.jaxa.jp -Y"
+alias sshx="ssh yuasa@xray.astro.isas.jaxa.jp -Y"
+alias sshy="ssh yuasa@yayoi.astro.isas.jaxa.jp -Y"
+alias sshn="ssh yuasa@nozomi.astro.isas.jaxa.jp -Y"
+alias sshcos="ssh yuasa@cosmos1.astro.isas.jaxa.jp -Y"
+alias sshcos1="ssh yuasa@cosmos1.astro.isas.jaxa.jp -Y"
+alias sshcos2="ssh yuasa@cosmos2.astro.isas.jaxa.jp -Y"
+alias sshae="ssh -Y hxd@aelnx2.astro.isas.jaxa.jp"
+alias sshs="ssh yuasa@suzaku.astro.isas.jaxa.jp -Y"
+alias shs="ssh yuasa@suzaku.astro.isas.jaxa.jp -Y"
+alias sshah="ssh yuasa@ahproc.astro.isas.jaxa.jp -Y"
+alias ssha="ssh yuasa@ahproc.astro.isas.jaxa.jp -Y"
+alias sshytk="ssh pi@ytk.mydns.jp -Y"
+
+#---------------------------------------------
+# make
+#---------------------------------------------
+alias m4="make -j4"
+alias m2="make -j2"
+alias m1="make -j1"
+alias m="make"
+alias mc="make clean"
+alias mi="make install"
+alias makei="make install"
+alias mcm="make clean;make"
+alias mcmv="make clean;make VERBOSE=1"
+alias nm="nano Makefile"
+alias mn="nano Makefile"
+alias mav="make VERBOSE=1"
+alias makev="make VERBOSE=1"
+function mkb(){
+	echo "Creating build dir for cmake build"
+	if [ $(basename $(pwd)) = build ]; then
+		echo "Exiting from build/"
+		cd ..
+	fi
+	if [ -d build ]; then
+		echo "Deleting existing build dir"
+		rm -rf build
+	fi
+	mkdir build
+	echo "cd to new build/"
+	pushd build > /dev/null
+}
+
+#---------------------------------------------
+# compression
+#---------------------------------------------
+alias untar="tar zxf"
+
+#---------------------------------------------
+# git related
+#---------------------------------------------
+function gitc(){
+if [ _$1 = _ ]; then
+ git commit -a
+else
+ git commit $@
+fi
+}
+alias gitcl="git clone"
+alias giti="git init"
+alias gitibs="git init --bare --share"
+alias gitch="git checkout"
+alias gita="git add"
+alias gitp="git push origin master"
+alias gitpush="git push origin master"
+alias gitpo="git push origin master"
+alias gitpom="git push origin master"
+alias gitd="git diff "
+alias gity="open -a /opt/homebrew-cask/Caskroom/github/latest/GitHub.app"
+alias gitpull="git pull origin master"
+alias gitpul="git pull origin master"
+alias gitrv="git remote -v"
+alias gitfo="git fetch origin"
+alias gitco="git checkout"
+alias gitl="git log"
+alias gitlog="git log"
+alias gitb="git branch"
+alias gitbr="git branch --remote"
+alias sha="openssl sha1"
+alias sha1="openssl sha1"
+function getsha(){
+	url=$1
+	filename=`basename ${url}`
+	echo "Downloading ${filename}..."
+	wget ${url} &> /dev/null
+	if [ -f $filename ]; then
+		echo "Completed"
+		openssl sha1 $filename
+		rm $filename
+	fi
+}
+
+#---------------------------------------------
+# network-related
+#---------------------------------------------
+alias ns="nslookup"
+alias pin="ping"
+alias pi="ping"
+alias ip="ifconfig | egrep '133.|192.|134.|172.'"
+alias known="nano $HOME/.ssh/known_hosts"
+alias hosts="nano /etc/hosts"
+
+#---------------------------------------------
+# shell
+#---------------------------------------------
+alias b="bash"
+
+#---------------------------------------------
+# change directory
+#---------------------------------------------
+alias up="cd .."
+alias upup="cd ../.."
+alias "cd..."="cd ../.."
+alias "cd.."="cd .."
+alias desk="cd ~/Desktop"
+alias cdd="cd ~/Desktop"
+alias d="cd ~/Desktop"
+alias ws="cd $WORKSPACE"
+alias dro="cd $HOME/Dropbox"
+alias des="cd ~/Desktop"
+
+#---------------------------------------------
+# ls commands
+#---------------------------------------------
+alias ls="ls -Gh"
+alias sl="ls"
+alias la="ls -lah"
+alias lsl="ls -lah"
+alias l="ls -lh"
+alias lsla="ls -lah"
+alias ll="ls -lh"
+alias lpa="ls -a |less"
+alias les="less"
+alias lp="ls |less"
+alias ks="ls"
+alias sk="ls"
+alias lsd="ls -d */"
+alias lsdir="ls -d */"
+alias l2="ls 2*"
+alias lss="ls |less"
+alias lsc="ls |cat"
+
+#---------------------------------------------
+# pager and editor
+#---------------------------------------------
+alias onano="/usr/bin/env nano -w "
+alias nw="nanow"
+alias ec="echo"
+alias eh="echo"
+alias exho="echo"
+alias t="open -t"
+alias h="cd $HOME"
+alias nano="nano -w -i"
+alias n="nano"
+alias n="nano -wi"
+alias nn="nano -wi"
+alias nanao="nano -wi"
+alias ge="gedit "
+alias ncm="nano CMakeLists.txt"
+alias opcm="open -t CMakeLists.txt"
+alias grep="grep -n --color"
+alias ogrep="/usr/bin/grep"
+
+#---------------------------------------------
+# basic commands
+#---------------------------------------------
+alias s="source"
+alias p="cat"
+function spe(){
+if [ -f $SPECIFIC_INITIALIZATION_FILE ]; then
+	nano $SPECIFIC_INITIALIZATION_FILE
+fi
+}
+alias quit="exit"
+alias rep="source ~/.zshrc"
+alias pur="rm *~;ls"
+alias cp="cp -r"
+function cph(){
+if [ -f $1 -o -d $1 ]; then
+cp -r $1 .
+fi
+}
+function mvh(){
+if [ -f $1 -o -d $1 ]; then
+mv $1 .
+fi
+}
+alias w="which"
+
+#---------------------------------------------
+#edit shell initialization file
+#---------------------------------------------
+alias z="open -t ~/Dropbox/zshrc/01_general_setting.sh"
+alias za="nano ~/Dropbox/zshrc/02_analysis_tools.sh"
+alias zs="nano $SPECIFIC_INITIALIZATION_FILE"
+alias chown="chown -R"
+alias chmod="chmod -R"
+alias x="chmod -R 755"
+alias pw="pwd"
+alias pd="pwd"
+
+#---------------------------------------------
+# terminals
+#---------------------------------------------
+alias gt="gnome-terminal&"
+alias gter="gt"
+alias gt4="gnome-terminal --geometry 80x20+10+0 & gnome-terminal --geometry 80x20+10+450 & gnome-terminal --geometry 80x20+720+0 & gnome-terminal --geometry 80x20+720+450 &"
+alias gt3="gnome-terminal --geometry 80x20+10+450 & gnome-terminal --geometry 80x20+720+0 & gnome-terminal --geometry 80x20+720+450 &"
+alias gt2="gnome-terminal --geometry 80x20+720+0 & gnome-terminal --geometry 80x20+720+450 &"
+
+#---------------------------------------------
+# applications
+#---------------------------------------------
+alias gp="gnuplot"
+alias ru=ruby
+alias gr=groovy
+alias jc=javac
+alias j=java
+
+#---------------------------------------------
+# path
+#---------------------------------------------
+if [ -d $HOME/Dropbox/bin ]; then
+export PATH=$HOME/Dropbox/bin:$PATH
+fi
+
+function addpath(){
+ if [ _$1 = _ ]; then
+  newpath=`pwd`
+ else
+  newpath=$1
+ fi
+ echo "$newpath was added to PATH..."
+ export PATH=$newpath:$PATH
+ if [ _$SPECIFIC_INITIALIZATION_FILE != _ ]; then
+  echo " " >> $SPECIFIC_INITIALIZATION_FILE
+  echo "#`date +'%Y%m%d_%H%M'`" >> $SPECIFIC_INITIALIZATION_FILE
+  echo "export PATH=$newpath:\$PATH" >> $SPECIFIC_INITIALIZATION_FILE
+ fi
+}
+
+#add path bin/lib
+function addbinlib(){
+ if [ _$1 = _ ]; then
+  newpath=`pwd`
+ else
+  newpath=$1
+ fi
+ 
+ if [ -d $newpath/bin ]; then
+  binpath=$newpath/bin
+ else
+  binpath="none"
+ fi
+ 
+ if [ -d $newpath/lib ]; then
+  libpath=$newpath/lib
+ else
+  libpath="none"
+ fi
+ 
+ if [ $binpath != "none" -a $libpath != "none" ]; then
+	 if [ _$SPECIFIC_INITIALIZATION_FILE != _ ]; then
+	  echo "$newpath/bin and $newpath/lib were added to PATH and LD_LIBRARY_PATH, respectively."
+	  export PATH=$binpath:$PATH
+	  export LD_LIBRARY_PATH=$libpath:$LD_LIBRARY_PATH
+	  #export DYLD_LIBRARY_PATH=$libpath:$DYLD_LIBRARY_PATH
+	  echo " " >> $SPECIFIC_INITIALIZATION_FILE
+	  echo "#`date +'%Y%m%d_%H%M'`" >> $SPECIFIC_INITIALIZATION_FILE
+	  echo "export PATH=$binpath:\$PATH" >> $SPECIFIC_INITIALIZATION_FILE
+	  echo "export LD_LIBRARY_PATH=$libpath:\$LD_LIBRARY_PATH" >> $SPECIFIC_INITIALIZATION_FILE
+	  #echo "export DYLD_LIBRARY_PATH=$libpath:\$DYLD_LIBRARY_PATH" >> $SPECIFIC_INITIALIZATION_FILE
+	 fi
+ else
+ 	echo "bin/ and lib/ were not found in $newpath..."
+ fi
+}
+
+#---------------------------------------------
+# ls coloring
+#---------------------------------------------
+export LSCOLORS=gxfxxxxxcxxxxxxxxxgxgx
+export LS_COLORS='di=01;36:ln=01;35:ex=01;32'
+zstyle ':completion:*' list-colors 'di=36' 'ln=35' 'ex=32'
+
+#---------------------------------------------
+# get / upload
+#---------------------------------------------
+function getg(){
+if [ _$1 != _ ]; then
+ scp -r galileo.phys.s.u-tokyo.ac.jp:$1 .
+fi
+}
+
+function geth(){
+if [ _$1 != _ ]; then
+ scp -r hikari.astro.isas.jaxa.jp:$1 .
+fi
+}
+
+function getgal(){
+if [ _$1 != _ ]; then
+ scp -r galaxy.astro.isas.jaxa.jp:$1 .
+fi
+}
+
+alias rs="rsync -auv "
+
+#---------------------------------------------
+# heasoft
+#---------------------------------------------
+alias ds=ds9
+alias fh=fhelp
+alias xsp=xspec
+alias xsl=xselect
+
+export PATH=$HOME/bin:$PATH
+
+alias du="du -h"
+
+alias v="cd ~/work/suzaku/v1223sgr"
+alias dr="cd ~/Dropbox"
+alias clang++="clang++ -std=c++11 -stdlib=libc++ "
+alias g++="clang++ -std=c++11 -stdlib=libc++ "
+
+export PATH=/Users/yuasa/Documents/work/eclipse/HongoScripts/bin:$PATH
+
+alias scp="scp -r"
+
+alias rmcmake="rm -rf CMakeFiles CMakeCache.txt cmake_install.cmake"
+
+
+alias clip="fc -ln -1 | pbcopy"
+alias h="cd ~/Desktop/hxicheck"
+
+alias tree="tree --charset unicode"
+
+function mkcd() {
+if [[ -d $1 ]]; then
+    echo "It already exsits! Cd to the directory."
+    cd $1
+else
+    echo "Created the directory and cd to it."
+    mkdir -p $1 && cd $1
+fi
+}
+
+alias cdmk=mkcd
+
+#############################################
+# Homebrew
+#############################################
+alias bi="brew install"
+alias bup="brew update"
+alias bupd="brew update"
+alias bupg="brew upgrade"
+alias bug="brew upgrade"
+alias bl="brew list"
+alias bui="brew uninstall"
+alias buin="brew uninstall"
+alias bun="brew uninstall"
+alias blink="brew link"
+alias bulink="brew unlink"
+alias btap="brew tap"
+alias bt="brew tap"
+alias bci="brew cask install"
+alias bcs="brew cask search"
+
+#############################################
+# gem
+#############################################
+alias gi="gem install"
+alias gemi="gem install"
+alias gemin="gem install"
