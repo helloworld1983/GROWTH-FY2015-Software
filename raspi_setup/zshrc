@@ -340,3 +340,5 @@ alias bcs="brew cask search"
 alias gi="gem install"
 alias gemi="gem install"
 alias gemin="gem install"
+
+export PATH=$HOME/work/install/bin:$PATH
