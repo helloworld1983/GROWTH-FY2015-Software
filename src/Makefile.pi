@@ -1,18 +1,19 @@
 
 CFITSIO_SRC = cfitsio3370.tar.gz
-INSTALL_PREFIX = $(HOME)/work/install/bin
+INSTALL_PREFIX = $(HOME)/work/install
 
 #============================================
 all: \
 	growth_fy2015_adc_measure_exposure \
+	growth_fy2015_read_hk \
 	test_readADC 
 
 install: all
 	@if [ ! -f $(INSTALL_PREFIX)/bin ]; then mkdir -p $(INSTALL_PREFIX)/bin; fi
 	cp growth_fy2015_adc_measure_exposure $(INSTALL_PREFIX)/bin
+	cp growth_fy2015_read_hk $(INSTALL_PREFIX)/bin
 	cp test_readADC $(INSTALL_PREFIX)/bin
-	cp ../scripts/hv*sh $(INSTALL_PREFIX)/bin
-	cp ../scripts/fpga*sh $(INSTALL_PREFIX)/bin
+	cp ../scripts/*sh $(INSTALL_PREFIX)/bin
 
 CXX=g++-4.8 -std=c++11
 
@@ -66,7 +67,10 @@ test_rmaphandler: test_rmaphandler.cc
 	
 growth_fy2015_adc_measure_exposure: main_growth_fy2015_adc_measure_exposure.cc  GROWTH_FY2015_ADC.hh
 	$(CXX) -g  main_growth_fy2015_adc_measure_exposure.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
-	
+
+growth_fy2015_read_hk: growth_fy2015_read_hk.cc ../include/ADCDAC.hh
+	$(CXX) -g  growth_fy2015_read_hk.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
+
 #============================================
 # External libraries
 #============================================

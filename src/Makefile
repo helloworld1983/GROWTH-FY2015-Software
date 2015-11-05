@@ -8,3 +8,4 @@ mac:
 
 pi:
 	make -f Makefile.pi -j4
+	make -f Makefile.pi -j4 install
