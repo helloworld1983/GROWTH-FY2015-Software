@@ -10,7 +10,7 @@
 
 #include "wiringPi.h"
 #include "wiringPiSPI.h"
-
+#include "CxxUtilities/CxxUtilities.hh"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,20 +21,20 @@
  */
 class ADCData {
 public:
-	const size_t nTemperatureSensors = 4;
+	static const size_t nTemperatureSensors = 4;
 	uint16_t temperature_raw[nTemperatureSensors];
 	double temperature[nTemperatureSensors];
 
-	const size_t nCurrentSensors = 2;
+	static const size_t nCurrentSensors = 2;
 	uint16_t current_raw[nCurrentSensors];
 	double current[nCurrentSensors];
 
-	const size_t nGeneralPurposeADC = 2;
+	static const size_t nGeneralPurposeADC = 2;
 	uint16_t generalPurposeADC_raw[nGeneralPurposeADC];
 	double generalPurposeADC[nGeneralPurposeADC];
 
 public:
-	static std::string toString() {
+	std::string toString() {
 		using namespace std;
 		std::stringstream ss;
 		for (size_t i = 0; i < ADCData::nTemperatureSensors; i++) {
@@ -56,6 +56,12 @@ public:
 			}
 		}
 		return ss.str();
+	}
+
+public:
+	ADCData(){
+		using namespace std;
+		cout << "ADCData instantiated..." << endl;
 	}
 };
 
@@ -100,10 +106,39 @@ public:
 	};
 
 private:
-	static void dumpError(int status) {
+	void dumpError(int status) {
 		if (status < 0) {
 			printf("Error: %s\n", strerror(errno));
 		}
+	}
+
+private:
+	bool initialized = false;
+
+public:
+	ADCDAC(){
+		using namespace std;
+		cout << "ADCDAC instantiated..." << endl;
+		initialize();
+	}
+
+private:
+	void initialize(){
+		using namespace std;
+		//initialize SPI
+		int status;
+#ifdef DEBUG_WIRINGPI
+		cerr << "Opening SPI interface..." << endl;
+#endif
+		status = wiringPiSPISetup(SPIChannelADC, SPIClockFrequency);
+		dumpError(status);
+#ifdef DEBUG_WIRINGPI
+		cerr << "Opening SPI interface done..." << endl;
+#endif
+#ifdef DEBUG_WIRINGPI
+		printf("wiringPiSPISetup status = %d\n", status);
+#endif
+		initialized=true;
 	}
 
 public:
@@ -111,19 +146,16 @@ public:
 	 * @param[in] channel ADC channel 0-7 (0-3 are temperature sensor)
 	 * @return 12-bit ADC value
 	 */
-	static int16_t readADC(size_t channel) {
+	int16_t readADC(size_t channel) {
+		int status;
+
 		if (channel >= NADCChannels) {
 			return InvalidChannel;
 		}
 
-		//initialize SPI
-		int status;
-		status = wiringPiSPISetup(SPIChannelADC, SPIClockFrequency);
-		dumpError(status);
-
-#ifdef DEBUG_WIRINGPI
-		printf("wiringPiSPISetup status = %d\n", status);
-#endif
+		if(!initialized) {
+			initialize();
+		}
 
 		//send AD conversion command to MCP3208
 		uint8_t maskedChannel = channel & 0x07; // mask lower 3 bits
@@ -148,7 +180,7 @@ public:
 	 * @param[in] channel Temperature sensor channel 0-3
 	 * @return temperature in degC
 	 */
-	static float readTemperature(size_t channel) {
+	float readTemperature(size_t channel) {
 		//check
 		if (channel >= NADCChannels) {
 			return InvalidChannel;
@@ -161,7 +193,7 @@ public:
 		}
 
 		//then to temperature
-		float temperature = this->convertToTemperature(adcValue);
+		float temperature = convertToTemperature(adcValue);
 
 #ifdef DEBUG_WIRINGPI
 		printf("Temperature = %.2fdegC\n", temperature);
@@ -171,14 +203,14 @@ public:
 	}
 
 public:
-	static double convertToTemperature(uint16_t adcValue) {
+	double convertToTemperature(uint16_t adcValue) {
 		float voltage = ((float) adcValue) / ADCMax * ADCVref;
 		float temperature = (voltage - LM60Offset) / LM60Coefficient;
 		return temperature;
 	}
 
 public:
-	static double convertToCurrent(uint16_t adcValue) {
+	double convertToCurrent(uint16_t adcValue) {
 		float voltage = ((float) adcValue) / ADCMax * ADCVref;
 		float Vsense = voltage / (LT6106_Rout / LT6106_Rin);
 		float current = Vsense / LT6106_Rsense * 1000; //mA
@@ -186,7 +218,7 @@ public:
 	}
 
 public:
-	static double convertToVoltage(uint16_t adcValue) {
+	double convertToVoltage(uint16_t adcValue) {
 		float voltage = ((float) adcValue) / ADCMax * ADCVref;
 		return voltage;
 	}
@@ -203,7 +235,7 @@ public:
 	 * @param[in] channel Temperature sensor channel 4-5
 	 * @return current in mA
 	 */
-	static float readCurrent(size_t channel) {
+	float readCurrent(size_t channel) {
 		//check
 		if (channel != ADCChannel_Current5V && channel != ADCChannel_Current3V3) {
 			return InvalidChannel;
@@ -222,7 +254,7 @@ public:
 		//Vout = Vsense*(Rout/Rin)
 		//Isense = Vsense/Rsense
 
-		float current = this->convertToCurrent(adcValue);
+		float current = convertToCurrent(adcValue);
 
 #ifdef DEBUG_WIRINGPI
 		printf("Current = %.3fmA\n", current);
@@ -242,8 +274,9 @@ public:
 	 * @param[in] value DAC value (0-4095)
 	 * @return status (0=successfully set, -1=range error)
 	 */
-	static int setDAC(size_t channel, uint16_t value) {
-
+	int setDAC(size_t channel, uint16_t value) {
+		int status;
+		
 		//check
 		if (channel >= NDACChannels) {
 			return InvalidChannel;
@@ -252,14 +285,9 @@ public:
 			return InvalidRange;
 		}
 
-		//initialize SPI
-		int status;
-		status = wiringPiSPISetup(SPIChannelDAC, SPIClockFrequency);
-		dumpError(status);
-
-#ifdef DEBUG_WIRINGPI
-		printf("wiringPiSPISetup status = %d\n",status);
-#endif
+		if(!initialized) {
+			initialize();
+		}
 
 		//set DAC value
 #ifdef DEBUG_WIRINGPI
@@ -298,20 +326,16 @@ public:
 	 * @param[in] channel 0 or 1 for Channel 0 and 1
 	 * @return status
 	 */
-	static int disableDAC(size_t channel) {
+	int disableDAC(size_t channel) {
+		int status;
 		//check
 		if (channel >= NDACChannels) {
 			return InvalidChannel;
 		}
 
-		//initialize SPI
-		int status;
-		status = wiringPiSPISetup(SPIChannelDAC, SPIClockFrequency);
-		dumpError(status);
-
-#ifdef DEBUG_WIRINGPI
-		printf("wiringPiSPISetup status = %d\n",status);
-#endif
+		if(!initialized) {
+			initialize();
+		}
 
 		//disable DAC value
 		unsigned char data[2];
@@ -343,8 +367,13 @@ public:
 	}
 
 public:
-	static ADCData getADCData() {
+	ADCData getADCData() {
+		using namespace std;
 		ADCData adcData;
+		
+#ifdef DEBUG_WIRINGPI
+		cout << "ADCDAC::getData(): entered" << endl;
+#endif
 
 		for (size_t i = 0; i < ADCData::nTemperatureSensors; i++) {
 			adcData.temperature_raw[i] = ADCDAC::readADC(i);
@@ -359,6 +388,9 @@ public:
 			adcData.generalPurposeADC[i] = ADCDAC::convertToVoltage(adcData.generalPurposeADC_raw[i]);
 		}
 
+#ifdef DEBUG_WIRINGPI
+		cout << "ADCDAC::getData(): returning" << endl;
+#endif
 		return adcData;
 	}
 };
