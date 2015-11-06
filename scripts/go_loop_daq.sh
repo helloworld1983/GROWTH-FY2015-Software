@@ -1,33 +1,37 @@
 #!/bin/bash
 
 exp=1800
+PIHOME="/home/pi"
+HDD="/media/hdd"
+DATADIR="${HDD}/growth/data"
+BINDIR="${PIHOME}/work/install/bin"
 
 #check HDD
-if [ ! -d /media/hdd/growth ]; then
-	echo "Error: Mount USB HDD as /media/hdd"
-	echo "       Then, create /media/hdd/growth/"
+if [ ! -d ${DATADIR} ]; then
+	echo "Error: Mount USB HDD as ${HDD}"
+	echo "       Then, create ${DATADIR}"
 	exit -1
 fi
 
 #check growth_config.yaml
-if [ ! -f $HOME/growth_config.yaml ]; then
+if [ ! -f $PIHOME/growth_config.yaml ]; then
 	echo "Error: Execute 'growth_config -g' before running this script."
 	exit -1
 fi
 
 #check detector ID
-detectorID=`growth_config --id`
+detectorID=`ruby ${BINDIR}/growth_config --id`
 if [ _$detectorID = _ ]; then
-	echo "Error: Check the content of ~/growth_config.yaml"
+	echo "Error: Check the content of ${PIHOME}/growth_config.yaml"
 	echo "       It should contain detectorID entry."
 	exit -1
 fi
 
 #check detector folder
-if [ ! -f /media/hdd/growth/${detectorID} ]; then
-	mkdir -p /media/hdd/growth/${detectorID}
-	if [ ! -f /media/hdd/growth/${detectorID} ]; then
-		echo "Error: Could not create /media/hdd/growth/${detectorID}"
+if [ ! -d ${DATADIR}/${detectorID} ]; then
+	mkdir -p ${DATADIR}/${detectorID}
+	if [ ! -d ${DATADIR}/${detectorID} ]; then
+		echo "Error: Could not create ${DATADIR}/${detectorID}"
 		echo "       Run this script as superuser."
 		exit -1
 	fi
