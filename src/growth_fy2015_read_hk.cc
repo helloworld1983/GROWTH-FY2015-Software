@@ -6,8 +6,10 @@
  */
 
 #include "ADCDAC.hh"
-
+#include "CxxUtilities/CxxUtilities.hh"
 #include <iostream>
+
+#define DEBUG_WIRINGPI 1
 
 int main(int argc, char* argv[]) {
 	using namespace std;
@@ -21,8 +23,9 @@ int main(int argc, char* argv[]) {
 	bool loop = true;
 	size_t elapsedTime = 0;
 	size_t duration = atoi(argv[1]);
+	ADCDAC adcdac;
 	while (loop) {
-		ADCData adcData = ADCDAC::getADCData();
+		ADCData adcData = adcdac.getADCData();
 		uint32_t unixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
 		cout << unixTime << " " << adcData.toString() << endl;
 		condition.wait(WaitDuration);

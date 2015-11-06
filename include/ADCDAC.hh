@@ -38,19 +38,19 @@ public:
 		using namespace std;
 		std::stringstream ss;
 		for (size_t i = 0; i < ADCData::nTemperatureSensors; i++) {
-			ss << temperature_raw[i] << " " << temperature[i];
+			ss << setw(5) << right << temperature_raw[i] << " " << setw(6) << fixed << setprecision(1) << temperature[i];
 			if (i != ADCData::nTemperatureSensors - 1) {
 				ss << " ";
 			}
 		}
-		for (size_t i = 0; i <= ADCData::nCurrentSensors; i++) {
-			ss << current_raw[i] << " " << current[i];
+		for (size_t i = 0; i < ADCData::nCurrentSensors; i++) {
+			ss << setw(5) << right << current_raw[i] << " " << setw(6) << fixed << setprecision(1) << current[i];
 			if (i != ADCData::nCurrentSensors - 1) {
 				ss << " ";
 			}
 		}
-		for (size_t i = 0; i <= ADCData::nGeneralPurposeADC; i++) {
-			ss << generalPurposeADC_raw[i] << " " << generalPurposeADC[i];
+		for (size_t i = 0; i < ADCData::nGeneralPurposeADC; i++) {
+			ss << setw(5) << right << generalPurposeADC_raw[i] << " " << setw(7) << fixed << setprecision(2) << generalPurposeADC[i];
 			if (i != ADCData::nGeneralPurposeADC - 1) {
 				ss << " ";
 			}
@@ -60,8 +60,6 @@ public:
 
 public:
 	ADCData(){
-		using namespace std;
-		cout << "ADCData instantiated..." << endl;
 	}
 };
 
@@ -117,8 +115,6 @@ private:
 
 public:
 	ADCDAC(){
-		using namespace std;
-		cout << "ADCDAC instantiated..." << endl;
 		initialize();
 	}
 
@@ -379,11 +375,11 @@ public:
 			adcData.temperature_raw[i] = ADCDAC::readADC(i);
 			adcData.temperature[i] = ADCDAC::convertToTemperature(adcData.temperature_raw[i]);
 		}
-		for (size_t i = 0; i <= ADCData::nCurrentSensors; i++) {
+		for (size_t i = 0; i < ADCData::nCurrentSensors; i++) {
 			adcData.current_raw[i] = ADCDAC::readADC(i + 4);
 			adcData.current[i] = ADCDAC::convertToCurrent(adcData.current_raw[i]);
 		}
-		for (size_t i = 0; i <= ADCData::nGeneralPurposeADC; i++) {
+		for (size_t i = 0; i < ADCData::nGeneralPurposeADC; i++) {
 			adcData.generalPurposeADC_raw[i] = ADCDAC::readADC(i + 6);
 			adcData.generalPurposeADC[i] = ADCDAC::convertToVoltage(adcData.generalPurposeADC_raw[i]);
 		}

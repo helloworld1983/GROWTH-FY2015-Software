@@ -6,6 +6,7 @@ INSTALL_PREFIX = $(HOME)/work/install
 all: \
 	growth_fy2015_adc_measure_exposure \
 	growth_fy2015_read_hk \
+	growth_fy2015_read_gps \
 	test_readADC 
 
 install: all
@@ -71,6 +72,9 @@ growth_fy2015_adc_measure_exposure: main_growth_fy2015_adc_measure_exposure.cc  
 growth_fy2015_read_hk: growth_fy2015_read_hk.cc ../include/ADCDAC.hh
 	$(CXX) -g  growth_fy2015_read_hk.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
 
+growth_fy2015_read_gps: growth_fy2015_read_gps.cc
+	$(CXX) -g  growth_fy2015_read_gps.cc $(CXXFLAGS) $(LDFLAGS) $(ROOT_LIBS) $(ROOT_CFLAGS) -o $@
+	
 #============================================
 # External libraries
 #============================================
