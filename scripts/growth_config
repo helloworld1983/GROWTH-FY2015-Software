@@ -15,7 +15,7 @@ if(ARGV.length==0)then
 	exit -1
 end
 
-configurationFile=ENV['HOME']+"/growth_config.yaml"
+configurationFile="/home/pi/growth_config.yaml"
 
 if(ARGV.count("-g")!=0 or ARGV.count("--generate")!=0)then
 	puts "Generating the configuration file."
