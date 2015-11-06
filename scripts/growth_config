@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+#20151106 Takayuki Yuasa
+
+def showHelp()
+	STDERR.puts <<EOS
+Options:
+	-g,--generate : generate detector configuration file as ~/growth_config.yaml
+	-i,--id     : returns detector ID (e.g. growth-fy2015a written in the configuration file).
+EOS
+end
+
+if(ARGV.length==0)then
+	showHelp()
+	exit -1
+end
+
+configurationFile=ENV['HOME']+"/growth_config.yaml"
+
+if(ARGV.count("-g")!=0 or ARGV.count("--generate")!=0)then
+	puts "Generating the configuration file."
+	puts "Enter detector ID (e.g. growth-fy2015a):"
+	detectorID=STDIN.gets
+	file=open(configurationFile,"w")
+	file.puts "detectorID: #{detectorID}"
+	file.close
+	puts "File saved (#{configurationFile})."
+	exit
+end
+
+if(ARGV.count("-i")!=0 or ARGV.count("--id")!=0)then
+	require "yaml"
+	if(!File.exist?(configurationFile))then
+		STDERR.puts "Error: configuration file does not exist. First execute 'growth_config -g' to create it."
+		exit -1
+	end
+	yaml=YAML.load_file(configurationFile)
+	puts yaml["detectorID"]
+	exit
+end
+
+showHelp
