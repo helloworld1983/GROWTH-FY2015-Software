@@ -9,8 +9,6 @@
 #include "CxxUtilities/CxxUtilities.hh"
 #include <iostream>
 
-#define DEBUG_WIRINGPI 1
-
 int main(int argc, char* argv[]) {
 	using namespace std;
 	if (argc < 2) {
@@ -19,7 +17,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	CxxUtilities::Condition condition;
-	static const double WaitDuration = 1000; //ms = 1s
+	static const double WaitDuration = 10000; //ms = 10s
 	bool loop = true;
 	size_t elapsedTime = 0;
 	size_t duration = atoi(argv[1]);
