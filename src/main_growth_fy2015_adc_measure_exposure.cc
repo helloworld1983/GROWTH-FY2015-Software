@@ -39,6 +39,16 @@ public:
 	}
 
 private:
+	const size_t GPSRegisterReadWaitInSec = 30; //30s
+	uint32_t unixTimeOfLastGPSRegisterRead = 0;
+
+private:
+	void readAnsSaveGPSRegister() {
+		eventListFile->fillGPSTime(adcBoard->getGPSRegisterUInt8());
+		unixTimeOfLastGPSRegisterRead = CxxUtilities::Time::getUNIXTimeAsUInt32();
+	}
+
+private:
 	GROWTH_FY2015_ADC* adcBoard;
 	CxxUtilities::Condition c;
 	size_t nEvents = 0;
@@ -114,10 +124,7 @@ public:
 		//---------------------------------------------
 		cout << "Reading GPS Register" << endl;
 		cout << adcBoard->getGPSRegister() << endl;
-		eventListFile->fillGPSTime(adcBoard->getGPSRegisterUInt8());
-		c.wait(1500);
-		cout << adcBoard->getGPSRegister() << endl;
-		eventListFile->fillGPSTime(adcBoard->getGPSRegisterUInt8());
+		this->readAnsSaveGPSRegister();
 
 		//---------------------------------------------
 		// Read events
@@ -139,7 +146,14 @@ public:
 			if (nReceivedEvents == 0) {
 				c.wait(50);
 			}
-			elapsedTime = CxxUtilities::Time::getUNIXTimeAsUInt32() - startTime_unixTime;
+			//get current unixtime
+			uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+			//read GPS register if necessary
+			if (currentUnixTime - unixTimeOfLastGPSRegisterRead > GPSRegisterReadWaitInSec) {
+				this->readAnsSaveGPSRegister();
+			}
+			//update elapsed time
+			elapsedTime = currentUnixTime - startTime_unixTime;
 		}
 
 #ifdef DRAW_CANVAS

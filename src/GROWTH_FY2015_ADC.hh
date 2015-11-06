@@ -348,7 +348,7 @@ public:
 		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
 		std::stringstream ss;
 		for (size_t i = 0; i < LengthOfGPSTimeRegister; i++) {
-			ss << hex << right << setw(2) << setfill('0') << (uint32_t) gpsTimeRegister[i];
+			ss << gpsTimeRegister[i];
 		}
 		return ss.str();
 	}

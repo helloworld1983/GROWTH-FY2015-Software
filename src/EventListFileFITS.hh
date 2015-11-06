@@ -83,7 +83,7 @@ private:
 	char* tforms_GPS[nColumns_GPS] = { //
 			(char*) "K", //
 					(char*) "V", //
-					(char*) "20A" //
+					(char*) "14A" //
 			};
 	char* tunits_GPS[nColumns_GPS] = { //
 			(char*) "", //
