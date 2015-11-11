@@ -197,6 +197,9 @@ class GROWTH_FY2015_ADC {
 public:
 	static const uint32_t AddressOfGPSTimeRegister = 0x20000002;
 	static const size_t LengthOfGPSTimeRegister = 20;
+	static const uint32_t AddressOfGPSDataFIFOResetRegister = 0x20001000;
+	static const uint32_t InitialAddressOfGPSDataFIFO = 0x20001002;
+	static const uint32_t FinalAddressOfGPSDataFIFO = 0x20001FFF;
 
 public:
 	class GROWTH_FY2015_ADCDumpThread: public CxxUtilities::StoppableThread {
@@ -240,7 +243,7 @@ public:
 	static constexpr double ClockInterval = 10e-9; //s
 
 	//FPGA TimeTag
-	static const uint32_t TimeTagResolutionInNanoSec = 10;//ns
+	static const uint32_t TimeTagResolutionInNanoSec = 10; //ns
 
 	//PHA Min/Max
 	static const uint16_t PHAMinimum = 0;
@@ -334,11 +337,20 @@ public:
 			delete this->channelModules[i];
 		}
 		delete eventDecoder;
+
+		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Deleting GPS Data FIFO read buffer." << endl;
+		if (gpsDataFIFOReadBuffer != NULL) {
+			delete gpsDataFIFOReadBuffer;
+		}
+
 		cout << "GROWTH_FY2015_ADC::~GROWTH_FY2015_ADC(): Completed." << endl;
 	}
 
 private:
 	uint8_t gpsTimeRegister[LengthOfGPSTimeRegister + 1];
+	const size_t GPSDataFIFODepthInBytes = 1024;
+	uint8_t* gpsDataFIFOReadBuffer = NULL;
+	std::vector<uint8_t> gpsDataFIFOData;
 
 public:
 	/** Returns a GPS Register value.
@@ -358,6 +370,32 @@ public:
 		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSTimeRegister, LengthOfGPSTimeRegister, gpsTimeRegister);
 		gpsTimeRegister[LengthOfGPSTimeRegister] = 0x00;
 		return gpsTimeRegister;
+	}
+
+public:
+	/** Clears the GPS Data FIFO.
+	 *  After clear, new data coming from GPS Receiver will be written to GPS Data FIFO.
+	 */
+	void clearGPSDataFIFO() {
+		uint8_t dummy[2];
+		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSDataFIFOResetRegister, 2, dummy);
+	}
+
+public:
+	/** Read GPS Data FIFO.
+	 *  After clear, new data coming from GPS Receiver will be written to GPS Data FIFO.
+	 */
+	std::vector<uint8_t> readGPSDataFIFO() {
+		if (gpsDataFIFOData.size() != GPSDataFIFODepthInBytes) {
+			gpsDataFIFOData.resize(GPSDataFIFODepthInBytes);
+		}
+		if (gpsDataFIFOReadBuffer == NULL) {
+			gpsDataFIFOReadBuffer = new uint8_t[GPSDataFIFODepthInBytes];
+		}
+		this->rmapHandler->read(adcRMAPTargetNode, AddressOfGPSDataFIFOResetRegister, GPSDataFIFODepthInBytes,
+				gpsDataFIFOReadBuffer);
+		memcpy(&(gpsDataFIFOData[0]), gpsDataFIFOReadBuffer, GPSDataFIFODepthInBytes);
+		return gpsDataFIFOData;
 	}
 
 public:
