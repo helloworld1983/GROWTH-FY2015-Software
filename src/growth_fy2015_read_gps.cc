@@ -37,6 +37,21 @@ int main(int argc, char* argv[]) {
 	}
 	cout << "timeTag=" << timeTag << " " << ss.str() << endl;
 
+	//---------------------------------------------
+	// Read GPS Data FIFO
+	//---------------------------------------------
+	cout << "Clearing GPS Data FIFO" << endl;
+	adcBoard->clearGPSDataFIFO();
+	cout << "Wait for 1.5 sec" << endl;
+	c.wait(1500);
+	cout << "Read GPS Data FIFO" << endl;
+	std::vector<uint8_t> gpsDataFIFOReadData = adcBoard->readGPSDataFIFO();
+	cout << "Read result:" << endl;
+	for (size_t i = 0; i < gpsDataFIFOReadData.size(); i++) {
+		cout << gpsDataFIFOReadData[i];
+	}
+	cout << endl;
+
 	return 0;
 }
 
