@@ -342,3 +342,4 @@ alias gemi="gem install"
 alias gemin="gem install"
 
 export PATH=$HOME/work/install/bin:$PATH
+alias sshkey="cat $HOME/.ssh/id_rsa.pub"
