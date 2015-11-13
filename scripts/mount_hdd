@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ ! -f /media/hdd ]; then
+sudo mkdir -p /media/hdd
+fi
+
+sudo mount /dev/sda1 /media/hdd
+
+echo "USB HDD mounted at /media/hdd"
+echo "ls resulted:"
+ls /media/hdd
