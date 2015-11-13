@@ -1,5 +1,12 @@
 #!/bin/bash
 
+grepResult=`grep "max_usb_current=1" /boot/config.txt`
+if [ _$grepResult = _ ]; then
+	echo "Error: please execute the following (and then reboot ) before mounting USB HDD."
+	echo "> bash GROWTH-FY2015-Software/raspi_setup/setup_usb_current.sh"
+	exit -1
+fi
+
 if [ ! -f /media/hdd ]; then
 sudo mkdir -p /media/hdd
 fi
