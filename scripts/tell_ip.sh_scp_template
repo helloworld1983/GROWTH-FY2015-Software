@@ -1,0 +1,10 @@
+#!/bin/bash
+
+server=username@host.name.com
+sleepDurationInSec=600
+
+while [ 1 = 1 ]; do
+	/sbin/ifconfig > raspi_ip.text
+	rsync -auv raspi_ip.text $server:ip_address_`growth_config -i`
+	sleep ${sleepDurationInSec}
+done
