@@ -8,12 +8,14 @@ if [ _$detectorID = _ ]; then
 fi
 
 while [ 1 = 1 ]; do
-	webcamDir=$HDD/growth/data/${detectorID}/`date '%Y%m'`/webcam
+	webcamDir=$HDD/growth/data/${detectorID}/`date '+%Y%m'`/webcam
 	if [ ! -d ${webcamDir} ]; then
-		mkdir -p ${webcamDir}
+		sudo mkdir -p ${webcamDir}
 	fi
 	pushd ${webcamDir}
-		fswebcam --resolution 3000x2000 `date "+%Y%m%d_%H%M%S.jpg"`
+		sudo fswebcam -S 30 --resolution 1200x1000 `date "+%Y%m%d_%H%M%S.jpg"`
 	popd
-	sleep 600
+	sleepTime=`ruby -e "hour=Time.now.hour;if(hour>17 or hour<6)then puts 1800; else puts 300;end"`
+	echo "Sleeping ${sleepTime}sec"
+	sleep $sleepTime
 done
