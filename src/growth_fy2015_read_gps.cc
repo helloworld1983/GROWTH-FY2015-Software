@@ -43,12 +43,17 @@ int main(int argc, char* argv[]) {
 	cout << "Clearing GPS Data FIFO" << endl;
 	adcBoard->clearGPSDataFIFO();
 	cout << "Wait for 1.5 sec" << endl;
-	c.wait(1500);
+	c.wait(2500);
 	cout << "Read GPS Data FIFO" << endl;
 	std::vector<uint8_t> gpsDataFIFOReadData = adcBoard->readGPSDataFIFO();
-	cout << "Read result:" << endl;
+	cout << "Read result (" << gpsDataFIFOReadData.size() << " bytes):" << endl;
 	for (size_t i = 0; i < gpsDataFIFOReadData.size(); i++) {
-		cout << gpsDataFIFOReadData[i];
+		cout << (char)gpsDataFIFOReadData[i];
+	}
+	cout << endl;
+	cout << "---------------------------------------------" << endl;
+	for (size_t i = 0; i < gpsDataFIFOReadData.size(); i++) {
+		cout << hex << right << setw(2) << setfill('0') << (uint32_t)gpsDataFIFOReadData[i] << " ";
 	}
 	cout << endl;
 

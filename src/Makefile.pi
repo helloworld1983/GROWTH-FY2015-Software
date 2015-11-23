@@ -13,10 +13,11 @@ install: all
 	@if [ ! -f $(INSTALL_PREFIX)/bin ]; then mkdir -p $(INSTALL_PREFIX)/bin; fi
 	cp growth_fy2015_adc_measure_exposure $(INSTALL_PREFIX)/bin
 	cp growth_fy2015_read_hk $(INSTALL_PREFIX)/bin
+	cp growth_fy2015_read_gps $(INSTALL_PREFIX)/bin
 	cp test_readADC $(INSTALL_PREFIX)/bin
 	cp ../scripts/* $(INSTALL_PREFIX)/bin
 
-CXX=g++-4.8 -std=c++11
+CXX=g++ -std=c++11
 
 ifdef USE_ROOT
 ROOT_LIBS = $(shell root-config --glibs)
