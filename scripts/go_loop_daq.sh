@@ -45,7 +45,7 @@ fi
 
 configurationFile=`ruby -e "puts File::expand_path('$1')"`
 
-pushd /media/hdd/growth/$detectorID
+pushd /media/hdd/growth/data/$detectorID
 
 while [ 1 = 1 ]; do
 
