@@ -7,6 +7,9 @@
 
 #include "GROWTH_FY2015_ADC.hh"
 #include "EventListFileFITS.hh"
+
+#include "MessageServer.hh"
+
 #ifdef USE_ROOT
 #include "EventListFileROOT.hh"
 #include "TH1D.h"
@@ -24,6 +27,7 @@ TApplication* app;
 static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
 
 //#define DRAW_CANVAS 0
+
 
 class MainThread: public CxxUtilities::StoppableThread {
 public:
@@ -82,7 +86,7 @@ public:
 		// Load configuration file
 		//---------------------------------------------
 		if (!CxxUtilities::File::exists(this->configurationFile)) {
-			cerr << "Error: YAML configuratin file " << this->configurationFile << " not found." << endl;
+			cerr << "Error: YAML configuration file " << this->configurationFile << " not found." << endl;
 			::exit(-1);
 		}
 		adcBoard->loadConfigurationFile(configurationFile);
@@ -141,7 +145,7 @@ public:
 
 		uint32_t elapsedTime = 0;
 		size_t nReceivedEvents = 0;
-		while (elapsedTime < this->exposureInSec) {
+		while (elapsedTime < this->exposureInSec && !stopped) {
 			nReceivedEvents = readAndThenSaveEvents();
 			if (nReceivedEvents == 0) {
 				c.wait(50);
@@ -233,6 +237,8 @@ private:
 
 int main(int argc, char* argv[]) {
 	using namespace std;
+
+	// Process arguments
 	if (argc < 4) {
 		cerr << "Provide UART device name (e.g. /dev/tty.usb-aaa-bbb), YAML configuration file, and exposure.." << endl;
 		::exit(-1);
@@ -247,7 +253,9 @@ int main(int argc, char* argv[]) {
 	app = new TApplication("app", &dummyArgc, dummyArgv);
 #endif
 
+	// Instantiate
 	MainThread* mainThread = new MainThread(deviceName, configurationFile, exposureInSec);
+	MessageServer* messageServer(mainThread);
 
 #ifdef DRAW_CANVAS
 	mainThread->start();
@@ -256,9 +264,17 @@ int main(int argc, char* argv[]) {
 	app->Run();
 	c.wait(3000);
 #else
+	// Run
 	mainThread->run();
+	messageServer->run();
+	messageServer->join();
 	mainThread->join();
 #endif
+
+	// Delete
+	delete mainThread;
+	delete messageServer;
+
 	return 0;
 }
 
