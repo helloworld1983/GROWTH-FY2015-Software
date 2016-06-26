@@ -55,7 +55,10 @@ test_serial_receive: test_serial_receive.cc
 
 test_rmap_to_fpga: test_rmap_to_fpga.cc
 	$(CXX) -g  $^ -I../include -lboost_system -lboost_thread-mt -o $@ -lxerces-c
-	
+
+test_messageserver: test_messageserver.cc
+	$(CXX) -g -std=c++11 -stdlib=libc++ $^ -I../include -Ipicojson -lzmq -lboost_system -lboost_thread-mt -o $@ -lxerces-c
+
 #---------------------------------------------
 # Mac applictions
 #---------------------------------------------
@@ -79,7 +82,7 @@ growth_fy2015_read_gps: growth_fy2015_read_gps.cc
 #============================================
 # External libraries
 #============================================
-prepare_external_libs: build_yaml_cpp build_cfitsio
+prepare_external_libs: build_yaml_cpp build_cfitsio clone_picojson
 	
 clean_external_libs:
 	rm -rf cfitsio yaml-cpp
@@ -104,3 +107,9 @@ get_cfitsio:
 cfitsio: get_cfitsio
 build_cfitsio: cfitsio
 	cd cfitsio; ./configure --prefix=`pwd` > log_configure; make -j4 > log_make; make install > log_make_install
+
+#============================================
+# picojson
+#============================================
+clone_picojson:
+	if [ ! -d picojson ]; then git clone https://github.com/kazuho/picojson; fi
