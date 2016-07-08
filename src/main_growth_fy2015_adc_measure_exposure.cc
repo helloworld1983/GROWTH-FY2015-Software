@@ -255,7 +255,7 @@ int main(int argc, char* argv[]) {
 
 	// Instantiate
 	MainThread* mainThread = new MainThread(deviceName, configurationFile, exposureInSec);
-	MessageServer* messageServer(mainThread);
+	MessageServer* messageServer = new MessageServer(mainThread);
 
 #ifdef DRAW_CANVAS
 	mainThread->start();

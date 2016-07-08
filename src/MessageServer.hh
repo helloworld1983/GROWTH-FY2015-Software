@@ -31,7 +31,7 @@ class MessageServer: public CxxUtilities::StoppableThread {
 public:
   /** @param[in] targetThread a pointer of Thread instance which will be controlled by this thread
    */
-  MessageServer(CxxUtilities::StoppableThread* targetThread) : //
+  MessageServer(CxxUtilities::StoppableThread* targetThread = nullptr) : //
       context(1), socket(context, ZMQ_REP), targetThread(targetThread) {
     std::stringstream ss;
     ss << "tcp://*:" << TCPPortNumber;
@@ -95,7 +95,9 @@ private:
             cout << "MessageServer::processMessage(): stop command received." << endl;
 #endif
             // Stop target thread and self
-            targetThread->stop();
+            if(targetThread!=nullptr){
+              targetThread->stop();
+            }
             this->stop();
           }
         }
