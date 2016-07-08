@@ -14,3 +14,4 @@ sudo apt-get install -y git cmake swig subversion
 sudo apt-get install -y libboost1.50-all libxerces-c-dev
 sudo apt-get install -y wicd-curses libzmq-dev python-zmq libcfitsio3-dev libyaml-cpp-dev
 sudo apt-get install -y supervisor
+sudo apt-get install -y i2c-tools
