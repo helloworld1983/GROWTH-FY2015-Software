@@ -102,6 +102,8 @@ PROMPT='%n@'$MACHINE_NAME_COLOR'%m'$DEFAULT'[''%1~'$DEFAULT']%(!.#.$) '
 #---------------------------------------------
 # make
 #---------------------------------------------
+alias m8="make -j8"
+alias m6="make -j6"
 alias m4="make -j4"
 alias m2="make -j2"
 alias m1="make -j1"
@@ -115,6 +117,7 @@ alias nm="nano Makefile"
 alias mn="nano Makefile"
 alias mav="make VERBOSE=1"
 alias makev="make VERBOSE=1"
+alias rmcmake="rm -rf CMakeFiles CMakeCache.txt cmake_install.cmake"
 function mkb(){
 	echo "Creating build dir for cmake build"
 	if [ $(basename $(pwd)) = build ]; then
@@ -342,4 +345,42 @@ alias gemi="gem install"
 alias gemin="gem install"
 
 export PATH=$HOME/work/install/bin:$PATH
-alias sshkey="cat $HOME/.ssh/id_rsa.pub"
+
+#---------------------------------------------
+# ssh
+#---------------------------------------------
+function sshkey(){
+	sshkeyFile=$HOME/.ssh/id_rsa.pub
+	echo 'sshkey copied to clipboard'
+	cat $sshkeyFile | pbcopy
+	echo "---------------------------------------------"
+	cat $sshkeyFile
+	echo "---------------------------------------------"
+}
+
+function sshconfig(){
+	sshConfigFile=$HOME/.ssh/config
+	if [ -f $sshConfigFile ]; then
+		open -t $sshConfigFile
+	fi
+}
+
+#---------------------------------------------
+# Utility functions
+#---------------------------------------------
+function chrun(){
+	chmod 755 $@
+}
+
+function fp(){
+	if [ _$1 = _ ]; then
+		pwd
+		return
+	fi
+	ruby -e "path=File::expand_path('$1');puts path"
+}
+
+
+function set_date(){
+	echo "date -s '`date +'%Y%m%dT%H:%M:%S'`'"
+}
