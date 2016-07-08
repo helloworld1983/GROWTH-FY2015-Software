@@ -1,7 +1,27 @@
-
 CFITSIO_SRC = cfitsio3370.tar.gz
-LIBYAML_CPP = /usr/lib/arm-linux-gnueabihf/libyaml-cpp.a
 INSTALL_PREFIX = $(HOME)/work/install
+
+CXX=g++ -std=c++11
+
+ifdef USE_ROOT
+  ROOT_LIBS = $(shell root-config --glibs)
+  ROOT_CFLAGS = $(shell root-config --cflags)
+endif
+
+CXXFLAGS_PI = \
+  -lwiringPi -I../include/wiringPi -DRASPBERRY_PI \
+  -ISpaceWireRMAPLibrary/includes -ICxxUtilities/includes -IXMLUtilities/include \
+  -Ipicojson
+
+CXXFLAGS = \
+  -std=c++11 $(CXXFLAGS_PI) -I. -I../include \
+  -I$(HOME)/work/install/include \
+  -Icfitsio/include -O3
+LDFLAGS  = \
+  -lboost_system -lboost_thread-mt -lxerces-c \
+  -L/usr/lib/arm-linux-gnueabihf/ -lyaml-cpp -lzmq \
+  -lcfitsio \
+  -L$(HOME)/work/install/lib -lpthread
 
 #============================================
 all: \
@@ -17,30 +37,6 @@ install: all
 	cp growth_fy2015_read_gps $(INSTALL_PREFIX)/bin
 	cp test_readADC $(INSTALL_PREFIX)/bin
 	cp ../scripts/* $(INSTALL_PREFIX)/bin
-
-CXX=g++ -std=c++11
-
-ifdef USE_ROOT
-ROOT_LIBS = $(shell root-config --glibs)
-ROOT_CFLAGS = $(shell root-config --cflags)
-endif
-
-# CXXFLAGS = -I. -I../include -I./yaml-cpp/include -I$(HOME)/work/install/include -Icfitsio/include
-# LDFLAGS = -lpthread -lboost_system -lboost_thread-mt -lxerces-c $(LIBYAML_CPP) -Lcfitsio/lib -lcfitsio
-
-CXXFLAGS_PI = \
-  -lwiringPi -I../include/wiringPi -DRASPBERRY_PI \
-  -ISpaceWireRMAPLibrary/includes -ICxxUtilities/includes -IXMLUtilities/include \
-  -Ipicojson
-
-CXXFLAGS = \
-  -std=c++11 $(CXXFLAGS_PI) -I. -I../include \
-  -I$(HOME)/work/install/include \
-  -Icfitsio/include -O3
-LDFLAGS  = \
-  -lboost_system -lboost_thread-mt -lxerces-c \
-  $(LIBYAML_CPP) -lcfitsio \
-  -L$(HOME)/work/install/lib -lpthread
 
 #---------------------------------------------
 # Raspberry Pi applications
