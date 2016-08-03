@@ -3,14 +3,17 @@
 deviceID=""
 m2xKey=""
 streamName="eventlist-size"
-
 detectorID=`growth_config -i`
+sleepDurationInSec=900
 
-value=`du -s -b /home/pi/work/observation/${detectorID} | awk '{print $1;}'`
-if [ _$value != _ ]; then
-    curl -i -X PUT \
-	 http://api-m2x.att.com/v2/devices/${deviceID}/streams/${streamName}/value \
-	 -H "X-M2X-KEY: ${m2xKey}" \
-	 -H "Content-Type: application/json" -d "{ \"value\": \"${value}\" }"
-fi
+while [ 1 = 1 ]; do
+    value=`du -s -b /home/pi/work/observation/${detectorID} | awk '{print $1;}'`
+    if [ _$value != _ ]; then
+	curl -i -X PUT \
+	     http://api-m2x.att.com/v2/devices/${deviceID}/streams/${streamName}/value \
+	     -H "X-M2X-KEY: ${m2xKey}" \
+	     -H "Content-Type: application/json" -d "{ \"value\": \"${value}\" }"
+    fi
+
+    sleep ${sleepDurationInSec}
 done
