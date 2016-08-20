@@ -311,31 +311,15 @@ alias fh=fhelp
 alias xsp=xspec
 alias xsl=xselect
 
-export PATH=$HOME/bin:$PATH
+#---------------------------------------------
+# Path
+#---------------------------------------------
+export PATH=$HOME/bin:/sbin:/usr/sbin:$PATH
 
 alias du="du -h"
 alias scp="scp -r"
 alias rs="rsync -auv "
 alias rmcmake="rm -rf CMakeFiles CMakeCache.txt cmake_install.cmake"
-
-#############################################
-# Homebrew
-#############################################
-alias bi="brew install"
-alias bup="brew update"
-alias bupd="brew update"
-alias bupg="brew upgrade"
-alias bug="brew upgrade"
-alias bl="brew list"
-alias bui="brew uninstall"
-alias buin="brew uninstall"
-alias bun="brew uninstall"
-alias blink="brew link"
-alias bulink="brew unlink"
-alias btap="brew tap"
-alias bt="brew tap"
-alias bci="brew cask install"
-alias bcs="brew cask search"
 
 #############################################
 # gem
