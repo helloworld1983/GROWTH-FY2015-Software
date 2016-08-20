@@ -1,0 +1,67 @@
+GROWTH Controllerが実装するコマンド
+
+# Controller
+controller.ping: Controllerの状態をpingする
+
+# 検出器システム関連
+detector.id: detectorIDを返す
+detector.ip: IPアドレスを返す
+detector.hash: GROWTH-Softwareのgitレポジトリのコミットのハッシュを返す
+
+# ガンマ線イベントの観測関連
+obs.set_configuration_file: コンフィグレーションファイルを指定する。指定したファイルは次にobs.startしたときに読み込まれる
+obs.start: 観測を開始する
+    option: {"exposure" => 30}
+obs.stop: 観測を停止する
+obs.split: 現在書き込み中の観測ファイルを閉じて、新しいファイルに書き込みを開始する
+obs.counts: 現在のファイルに書き込んだ総イベント数と、チャネルごとのカウント数を返す
+    reply: {"total" => 1000, "ch0" => 100, "ch1" => 90, "ch2" => 0, "ch3" => 0)}
+obs.elapsed_time: 現在のファイルに書き込み始めてからの経過秒数を返す
+    reply: {"elapsed_time" => 580}
+obs.file: 現在書き込み中のファイルの名前を返す
+
+# 自律機能関連
+auto.set_limit: 温度リミットなどを設定
+	option: {"temperature" => {"threshold" => 45.0, "hysterisis" => 40.0}}
+auto.chekc_gpio: GPIOによる指定の有無を確認して返答
+	reply: {"auto_obs" => True, "auto_m2x" => True}
+
+# HV関連
+hv.on: HV出力開始
+    option: {"ch"=>[0,1]}
+hv.set: HV出力値設定
+	option: {"dac_raw" => 1023}
+	option: {"volt" => 750}
+hv.off: HV出力停止
+    option: {"ch"=>[0,1]}
+
+# Housekeeping関連
+hk.spi_adc: SPI接続されたADCの8ch分の値を読みだす
+    reply: {"ch0" => 1024, "ch1" => 300, "ch2" => 254, ... }
+hk.read_bme280: 温湿度・大気圧を読みだす
+	reply: {"temperature" => 24.5, "humidity" => 56.5, "pressure" => 1025.5}
+hk.start: HKの記録を開始する
+    option: {"duration" => 秒数}
+hk.stop: HKの記録を停止する
+hk.file: 記録中のファイル名
+hk.elapsed_time: HK記録を開始してからの経過秒数
+
+# M2Xテレメトリ関連
+m2x.start: テレメトリ送信を開始
+m2x.stop: テレメトリ送信を停止
+m2x.status: テレメトリ送信のステータス
+	reply: {"sending" => True}
+m2x.list: テレメトリ一覧
+
+# リモートコマンド関連
+rc.check: 指定されたサーバにアクセスしてコマンドの有無を確認
+rc.status: ステータスを返す
+	reply: {"perodic_check" => True, "check_period" => 300, "execute_count" => 8, "last_execution" => "2016-10-05T23:45:00"}
+
+# ディスプレイ関連
+oled.display: 指定したテキストファイルをディスプレイに表示
+	option: {"text" => "..."}
+	option: {"file" => "..."}
+oled.clear: ディスプレイの表示を消去
+oled.image: イメージを2値化して表示
+	option: {"url" => ... }
