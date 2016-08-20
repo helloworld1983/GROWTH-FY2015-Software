@@ -1,6 +1,11 @@
-# Data Acquisition Software for GROWTH FY2015 Detectors
+# GROWTH Experiment - Software Reporsitory
 
-This is a repository of data acquisition (DAQ) software for Gamma-ray/Electron detectors of the GROWTH FY2015 experiment.
+## Overview
+This repository contains the following programs used in the Gamma-Ray Observation of Winter Thundercloud (GROWTH) experiment.
+
+1. data acquisition (DAQ) software for waveform sampling ADC board
+2. housekeeping data collection software
+3. detector controll software
 
 ## Build & Install on Mac
 
@@ -24,7 +29,7 @@ brew install hongoscripts
 brew install zeromq
 
 # Ruby
-gem install ffi-rzmq
+gem install ffi-rzmq pry git pi_piper
 ```
 
 ### Build
@@ -49,7 +54,7 @@ sudo apt-get install -y ruby-dev
 sudo apt-get install -y libzmq3-dev
 
 # Ruby
-sudo gem install ffi-rzmq
+sudo gem install ffi-rzmq pry git pi_piper
 ```
 
 ### Build

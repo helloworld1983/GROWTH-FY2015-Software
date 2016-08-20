@@ -145,6 +145,7 @@ public:
 
 		uint32_t elapsedTime = 0;
 		size_t nReceivedEvents = 0;
+		stopped = false;
 		while (elapsedTime < this->exposureInSec && !stopped) {
 			nReceivedEvents = readAndThenSaveEvents();
 			if (nReceivedEvents == 0) {
