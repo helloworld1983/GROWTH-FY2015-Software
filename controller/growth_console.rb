@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require "ffi-rzmq"
+require "rbczmq"
 require "json"
 require "pry"
 PortNumber = 5555
@@ -16,20 +16,15 @@ class ConsoleModule
 	def sendCommand(command, optionHash={})
 		jsonCommand = {command: name+"."+command, option: optionHash}.to_json
 		puts "Sending command: #{jsonCommand}"
-		$requester.send_string(jsonCommand.to_s)
+		$requester.send(jsonCommand.to_s)
 		return receiveReply()
 	end
 
 	def receiveReply()
-		replyMessage=""
-		status = $requester.recv_string(replyMessage)
-		jsonReply = {}.to_json
-		# puts "Receive status: #{status} (#{ZMQ::Util.error_string})"
-		if(status>0)then
-			jsonReply = JSON.parse(replyMessage)
-			# puts "Received message: #{JSON.pretty_generate(jsonReply)}"
-			return jsonReply
-		else
+		begin
+			replyMessage = $requester.recv()
+			return JSON.parse(replyMessage)
+		rescue
 			return {}.to_json
 		end
 		
@@ -85,12 +80,11 @@ context = ZMQ::Context.new
 puts "Connecting to Controller..."
 $requester = context.socket(ZMQ::REQ)
 begin
-	status = $requester.connect("tcp://localhost:#{PortNumber}")
-	puts status
-	if(status<0)then
-		puts ZMQ::Util::error_string
-		exit -1
-	end
+	$requester.connect("tcp://localhost:#{PortNumber}")
+	# if(status<0)then
+	# 	puts ZMQ::Util::error_string
+	# 	exit -1
+	# end
 rescue
 	puts "Error: connection failed. It seems Controller is not running"
 	exit -1

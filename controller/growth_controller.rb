@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require "ffi-rzmq"
+require "rbczmq"
 require "json"
 require "yaml"
 require "socket"
@@ -274,16 +274,16 @@ class DetectorController
 	def run()
 		while(!@stopped)
 			# Wait for a JSON message from a client
-			message=""
-			status = @socket.recv_string(message)
-			puts "Receive status: #{status} (#{ZMQ::Util.error_string}) message: #{message.inspect}"
+			message = @socket.recv()
+			#puts "Receive status: #{status} (#{ZMQ::Util.error_string}) message: #{message.inspect}"
+			puts "Receive status: message: #{message.inspect}"
 
 			# Process JSON commands
 			replyMessage = "{}"
 			if(message!="")then
 				replyMessage = processJSONCommand(toJSONObject(message))
 			end
-			@socket.send_string(replyMessage)
+			@socket.send(replyMessage)
 		end
 		# Finalize
 		puts "Controller stopped"
