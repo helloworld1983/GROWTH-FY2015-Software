@@ -944,7 +944,7 @@ public:
 		cout << "// Programing the digitizer" << endl;
 		cout << "//---------------------------------------------" << endl;
 		try {
-			//record legnth
+			//record length
 			this->setNumberOfSamples(PreTriggerSamples + PostTriggerSamples);
 			this->setNumberOfSamplesInEventPacket(SamplesInEventPacket);
 			for (size_t ch = 0; ch < nChannels; ch++) {
