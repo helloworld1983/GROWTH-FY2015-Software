@@ -16,3 +16,5 @@ sudo apt-get install -y wicd-curses libzmq-dev python-zmq libcfitsio3-dev libyam
 sudo apt-get install -y supervisor
 sudo apt-get install -y i2c-tools
 sudo apt-get install -y libzmq3-dev
+sudo apt-get install -y ruby-dev
+sudo apt-get install -y libssl-dev
