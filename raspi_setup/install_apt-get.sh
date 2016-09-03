@@ -13,3 +13,4 @@ sudo apt-get install -y imagemagick libjpeg8-dev
 sudo apt-get install -y git cmake swig subversion
 sudo apt-get install -y libboost1.50-all libxerces-c-dev
 sudo apt-get install -y wicd-curses
+sudo apt-get install -y python-imaging python-smbus
