@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 
+# if this script doesn't work because of no installation of "pi_piper", execute
+# sudo apt-get install ruby-ffi ruby-dev libssl-dev
+# sudo gem install pi_piper
+
 require "pi_piper"
 
 RESOLUTION_AT_12BIT = 4095.0
