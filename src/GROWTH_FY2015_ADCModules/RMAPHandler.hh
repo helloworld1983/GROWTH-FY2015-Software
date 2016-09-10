@@ -185,7 +185,7 @@ public:
 	  uint8_t buffer[4];
     using namespace std;
     if (rmapInitiator == NULL) {
-      return;
+      return 0x00;
     }
     for (size_t i = 0; i < maxNTrials; i++) {
       try {
@@ -193,6 +193,8 @@ public:
         rmapInitiator->read(rmapTargetNode, memoryAddress, 2, buffer+2, timeOutDuration);
         // Upper 16 bits
         rmapInitiator->read(rmapTargetNode, memoryAddress+2, 2, buffer, timeOutDuration);
+        uint32_t result = (buffer[0]<<24) + (buffer[1]<<16) + (buffer[2]<<8) + (buffer[3]);
+        return result;
         break;
       } catch (RMAPInitiatorException& e) {
         cerr << "RMAPHandler::read(): RMAPInitiatorException::" << e.toString() << endl;

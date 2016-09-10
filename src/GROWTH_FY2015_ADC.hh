@@ -171,6 +171,7 @@
  * @endcode
  */
 
+#include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Constants.hh"
 #include "GROWTH_FY2015_ADCModules/Types.hh"
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/Types.hh"
@@ -180,7 +181,6 @@
 #include "GROWTH_FY2015_ADCModules/EventDecoder.hh"
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelModule.hh"
 #include "SpaceWireRMAPLibrary/Boards/SpaceFibreADCBoardModules/ChannelManager.hh"
-#include "GROWTH_FY2015_ADCModules/RMAPHandlerUART.hh"
 #include "yaml-cpp/yaml.h"
 
 enum class SpaceFibreADCException {

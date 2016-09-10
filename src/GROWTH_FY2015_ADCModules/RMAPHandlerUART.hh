@@ -1,8 +1,6 @@
 #ifndef RMAPHandlerUART_HH_
 #define RMAPHandlerUART_HH_
 
-#include "SpaceWireRMAPLibrary/SpaceWire.hh"
-#include "SpaceWireRMAPLibrary/RMAP.hh"
 #include "GROWTH_FY2015_ADCModules/RMAPHandler.hh"
 #include "SpaceWireIFOverUART.hh"
 
