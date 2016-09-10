@@ -1,14 +1,5 @@
-/*
- * main_growth_fy2015_adc_measure_exposure.cc
- *
- *  Created on: Sep 27, 2015
- *      Author: yuasa
- */
-
-#include "GROWTH_FY2015_ADC.hh"
-#include "EventListFileFITS.hh"
-
-#include "MessageServer.hh"
+#ifndef SRC_MAINTHREAD_HH_
+#define SRC_MAINTHREAD_HH_
 
 #ifdef USE_ROOT
 #include "EventListFileROOT.hh"
@@ -24,10 +15,10 @@
 TApplication* app;
 #endif
 
-static const uint32_t AddressOf_EventFIFO_DataCountRegister = 0x20000000;
+#include "GROWTH_FY2015_ADC.hh"
+#include "EventListFileFITS.hh"
 
 //#define DRAW_CANVAS 0
-
 
 class MainThread: public CxxUtilities::StoppableThread {
 public:
@@ -109,7 +100,6 @@ public:
 		//---------------------------------------------
 		// Create an output file
 		//---------------------------------------------
-		std::string outputFileName;
 #ifdef USE_ROOT
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
 		eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile);
@@ -143,6 +133,11 @@ public:
 		cout << "Reading GPS Register" << endl;
 		cout << adcBoard->getGPSRegister() << endl;
 		this->readAnsSaveGPSRegister();
+
+		//---------------------------------------------
+		// Log start time
+		//---------------------------------------------
+		startUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
 
 		//---------------------------------------------
 		// Read events
@@ -230,6 +225,22 @@ private:
 		return nReceivedEvents;
 	}
 
+public:
+	const size_t getNEvents() const {
+		return nEvents;
+	}
+
+public:
+	const size_t getElapsedTime() const {
+		uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
+		return currentUnixTime - startUnixTime;
+	}
+
+public:
+	const std::string getOutputFileName() const {
+		return outputFileName;
+	}
+
 private:
 	void debug_readStatus(int debugChannel = 3) {
 		using namespace std;
@@ -241,55 +252,16 @@ private:
 		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
 		printf("Livetime     = %d\n", channelModule->getLivetime());
 		cout << channelModule->getStatus() << endl;
-
-		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(AddressOf_EventFIFO_DataCountRegister);
+		size_t eventFIFODataCount = adcBoard->getRMAPHandler()->getRegister(//
+				ConsumerManagerEventFIFO::AddressOf_EventFIFO_DataCount_Register);
 		printf("EventFIFO Count = %zu\n", eventFIFODataCount);
 		printf("TriggerCount = %zu\n", channelModule->getTriggerCount());
 		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
-
 	}
+
+private:
+	uint32_t startUnixTime;
+	std::string outputFileName;
 };
 
-int main(int argc, char* argv[]) {
-	using namespace std;
-
-	// Process arguments
-	if (argc < 4) {
-		cerr << "Provide UART device name (e.g. /dev/tty.usb-aaa-bbb), YAML configuration file, and exposure.." << endl;
-		::exit(-1);
-	}
-	std::string deviceName(argv[1]);
-	std::string configurationFile(argv[2]);
-	double exposureInSec = atoi(argv[3]);
-
-	int dummyArgc = 0;
-	char* dummyArgv[] = { (char*) "" };
-#ifdef DRAW_CANVAS
-	app = new TApplication("app", &dummyArgc, dummyArgv);
-#endif
-
-	// Instantiate
-	MainThread* mainThread = new MainThread(deviceName, configurationFile, exposureInSec);
-	MessageServer* messageServer = new MessageServer(mainThread);
-
-#ifdef DRAW_CANVAS
-	mainThread->start();
-	CxxUtilities::Condition c;
-	c.wait(3000);
-	app->Run();
-	c.wait(3000);
-#else
-	// Run
-	mainThread->run();
-	messageServer->run();
-	messageServer->join();
-	mainThread->join();
-#endif
-
-	// Delete
-	delete mainThread;
-	delete messageServer;
-
-	return 0;
-}
-
+#endif /* SRC_MAINTHREAD_HH_ */

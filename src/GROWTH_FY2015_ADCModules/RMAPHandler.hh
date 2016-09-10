@@ -210,6 +210,7 @@ public:
         usleep(100);
       }
     }
+    return 0x00;
   }
 
 public:

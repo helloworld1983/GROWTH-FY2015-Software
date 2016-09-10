@@ -1,10 +1,3 @@
-/*
- * MessageServer.hh
- *
- *  Created on: Jun 26, 2016
- *      Author: Takayuki Yuasa
- */
-
 #ifndef SRC_MESSAGESERVER_HH_
 #define SRC_MESSAGESERVER_HH_
 
@@ -21,6 +14,8 @@
 // picojson
 #include "picojson.h"
 
+#include "MainThread.hh"
+
 /** Receives message from a client, and process the message.
  * Typical messages include:
  * <ul>
@@ -29,10 +24,10 @@
  */
 class MessageServer: public CxxUtilities::StoppableThread {
 public:
-  /** @param[in] targetThread a pointer of Thread instance which will be controlled by this thread
+  /** @param[in] mainThread a pointer of Thread instance which will be controlled by this thread
    */
-  MessageServer(CxxUtilities::StoppableThread* targetThread = nullptr) : //
-      context(1), socket(context, ZMQ_REP), targetThread(targetThread) {
+  MessageServer(MainThread* mainThread) : //
+      context(1), socket(context, ZMQ_REP), mainThread(mainThread) {
     std::stringstream ss;
     ss << "tcp://*:" << TCPPortNumber;
     int timeout = TimeOutInMilisecond;
@@ -74,12 +69,16 @@ public:
 #endif
 
       // Process received message
-      processMessage(messagePayload);
+      picojson::object replyJSON = processMessage(messagePayload);
+
+      // Reply
+      std::string replyMessageString = picojson::value(replyJSON).serialize();
+      socket.send(replyMessageString.c_str(), replyMessageString.size());
     }
   }
 
 private:
-  void processMessage(const std::string& messagePayload) {
+  picojson::object processMessage(const std::string& messagePayload) {
     using namespace std;
     picojson::value v;
     picojson::parse(v, messagePayload);
@@ -88,17 +87,14 @@ private:
       cout << "MessageServer::processMessage(): received object is: {" << endl;
 #endif
       for (auto& it : v.get<picojson::object>()) {
+#ifdef DEBUG_MESSAGESERVER
         cout << it.first << ": " << it.second.to_str() << endl;
+#endif
         if (it.first == "command") {
           if (it.second.to_str() == "stop") {
-#ifdef DEBUG_MESSAGESERVER
-            cout << "MessageServer::processMessage(): stop command received." << endl;
-#endif
-            // Stop target thread and self
-            if(targetThread!=nullptr){
-              targetThread->stop();
-            }
-            this->stop();
+          	return processStopCommand();
+          }else if (it.second.to_str() == "getStatus") {
+          	return processGetStatusCommand();
           }
         }
       }
@@ -106,16 +102,53 @@ private:
       cout << "}";
 #endif
     }
+    // Return error message if the received command is invalid
+    picojson::object errorMessage;
+    errorMessage["status"]=picojson::value("error");
+    errorMessage["message"]=picojson::value("invalid command");
+    return errorMessage;
   }
 
 public:
   static const uint16_t TCPPortNumber = 5555;
   static const int TimeOutInMilisecond = 1000; // 1 sec
+
+private:
+  picojson::object processStopCommand(){
+#ifdef DEBUG_MESSAGESERVER
+		cout << "MessageServer::processMessage(): stop command received." << endl;
+#endif
+		// Stop target thread and self
+		if (mainThread != nullptr) {
+			mainThread->stop();
+		}
+		this->stop();
+		// Construct reply message
+		picojson::object replyMessage;
+		replyMessage["status"] = picojson::value("ok");
+		return replyMessage;
+  }
+
+private:
+  picojson::object processGetStatusCommand(){
+#ifdef DEBUG_MESSAGESERVER
+		cout << "MessageServer::processMessage(): getStatus command received." << endl;
+#endif
+		// Construct reply message
+		picojson::object replyMessage;
+		replyMessage["status"] = picojson::value("ok");
+		replyMessage["elapsedTime"] = picojson::value(static_cast<double>(mainThread->getElapsedTime()));
+		replyMessage["nEvents"] = picojson::value(static_cast<double>(mainThread->getNEvents()));
+		return replyMessage;
+  }
+
 private:
   zmq::context_t context;
   zmq::socket_t socket;
+  zmq::message_t replyMessage;
+
 private:
-  CxxUtilities::StoppableThread* targetThread;
+  MainThread* mainThread;
 };
 
 #endif /* SRC_MESSAGESERVER_HH_ */
