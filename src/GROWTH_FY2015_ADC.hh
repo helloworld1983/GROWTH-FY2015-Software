@@ -201,6 +201,11 @@ public:
 	static const uint32_t InitialAddressOfGPSDataFIFO = 0x20001002;
 	static const uint32_t FinalAddressOfGPSDataFIFO = 0x20001FFF;
 
+	static const uint32_t AddressOfFPGATypeRegister_L = 0x30000000;
+	static const uint32_t AddressOfFPGATypeRegister_H = 0x30000002;
+	static const uint32_t AddressOfFPGAVersionRegister_L = 0x30000004;
+	static const uint32_t AddressOfFPGAVersionRegister_H = 0x30000006;
+
 public:
 	class GROWTH_FY2015_ADCDumpThread: public CxxUtilities::StoppableThread {
 	private:
@@ -351,6 +356,23 @@ private:
 	const size_t GPSDataFIFODepthInBytes = 1024;
 	uint8_t* gpsDataFIFOReadBuffer = NULL;
 	std::vector<uint8_t> gpsDataFIFOData;
+
+public:
+  /** Returns FPGA Type as string.
+   */
+  uint32_t  getFPGAType(){
+    uint32_t fpgaType = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGATypeRegister_L);
+    return fpgaType;
+  }
+
+public:
+  /** Returns FPGA Version as string.
+   */
+  uint32_t getFPGAVersion(){
+    using namespace std;
+    uint32_t fpgaVersion = this->rmapHandler->read32BitRegister(adcRMAPTargetNode, AddressOfFPGAVersionRegister_L);
+    return fpgaVersion;
+  }
 
 public:
 	/** Returns a GPS Register value.
@@ -971,10 +993,7 @@ public:
 			cerr << "Device configuration failed." << endl;
 			::exit(-1);
 		}
-
 	}
-
-}
-;
+};
 
 #endif /* GROWTH_FY2015_ADC_HH_ */

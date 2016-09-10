@@ -107,15 +107,19 @@ private:
 	size_t rowExpansionStep = InitialRowNumber;
 	size_t nSamples;
 	double exposureInSec;
+	uint32_t fpgaType = 0x00000000;
+	uint32_t fpgaVersion = 0x00000000;
 
 private:
 	CxxUtilities::Mutex fitsAccessMutes;
 
 public:
 	EventListFileFITS(std::string fileName, std::string detectorID = "empty", std::string configurationYAMLFile = "",
-			size_t nSamples = 1024, double exposureInSec = 0) :
-			EventListFile(fileName), detectorID(detectorID), nSamples(nSamples), configurationYAMLFile(configurationYAMLFile), exposureInSec(
-					exposureInSec) {
+			size_t nSamples = 1024, double exposureInSec = 0, //
+			uint32_t fpgaType = 0x00000000, uint32_t fpgaVersion = 0x00000000) :
+    EventListFile(fileName), detectorID(detectorID), nSamples(nSamples),//
+    configurationYAMLFile(configurationYAMLFile), exposureInSec(exposureInSec),//
+    fpgaType(fpgaType), fpgaVersion(fpgaVersion) {
 		createOutputFITSFile();
 	}
 
@@ -187,11 +191,18 @@ private:
 		 */
 
 		char* n; //keyword name
+		std::string fpgaTypeStr = CxxUtilities::String::toHexString(fpgaType, 8);
+		std::string fpgaVersionStr = CxxUtilities::String::toHexString(fpgaVersion, 8);
 		std::string creationDate = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS();
 		long NSAMPLES = this->nSamples;
 		if ( //
+		    // FPGA Type and Version
+        fits_update_key_str(outputFile, n = (char*) "FPGATYPE", (char*) fpgaTypeStr.c_str(), "FPGA Type",
+        &fitsStatus) || //
+        fits_update_key_str(outputFile, n = (char*) "FPGAVERS", (char*) fpgaVersionStr.c_str(), "FPGA Version",
+        &fitsStatus) || //
 				 //fileCreationDate
-		fits_update_key_str(outputFile, n = (char*) "FILEDATE", (char*) creationDate.c_str(), "fileCreationDate",
+        fits_update_key_str(outputFile, n = (char*) "FILEDATE", (char*) creationDate.c_str(), "fileCreationDate",
 				&fitsStatus) || //
 				//detectorID
 				fits_update_key_str(outputFile, n = (char*) "DET_ID", (char*) this->detectorID.c_str(), "detectorID",

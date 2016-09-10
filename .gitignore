@@ -1,0 +1,11 @@
+cfitsio
+yaml-cpp
+picojson
+*.fits
+*.sublime-*
+*.gz
+*.tar
+*.zip
+*.plist
+growth_fy2015_adc_measure_exposure
+

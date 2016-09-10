@@ -73,6 +73,9 @@ public:
 		using namespace std;
 		adcBoard = new GROWTH_FY2015_ADC(deviceName);
 
+		uint32_t fpgaType = adcBoard->getFPGAType();
+		uint32_t fpgaVersion = adcBoard->getFPGAVersion();
+
 #ifdef DRAW_CANVAS
 		//---------------------------------------------
 		// Run ROOT eventloop
@@ -109,11 +112,12 @@ public:
 		std::string outputFileName;
 #ifdef USE_ROOT
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".root";
-		eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile );
+		eventListFile=new EventListFileROOT(outputFileName,adcBoard->DetectorID, this->configurationFile);
 #else
 		outputFileName = CxxUtilities::Time::getCurrentTimeYYYYMMDD_HHMMSS() + ".fits";
-		eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID, this->configurationFile,
-				adcBoard->getNSamplesInEventListFile(), this->exposureInSec);
+		eventListFile = new EventListFileFITS(outputFileName, adcBoard->DetectorID, this->configurationFile, //
+				adcBoard->getNSamplesInEventListFile(), this->exposureInSec, //
+				fpgaType, fpgaVersion);
 #endif
 		cout << "Output file name: " << outputFileName << endl;
 
@@ -122,6 +126,16 @@ public:
 		//---------------------------------------------
 		cout << "Sending CPU Trigger" << endl;
 		adcBoard->sendCPUTrigger();
+
+		//---------------------------------------------
+		// Read raw ADC values
+		//---------------------------------------------
+		for (size_t i = 0; i < 4; i++) {
+			cout << "Ch." << i << " ADC ";
+			for (size_t o = 0; o < 5; o++) {
+				cout << (uint32_t) adcBoard->getCurrentADCValue(i) << " " << endl;
+			}
+		}
 
 		//---------------------------------------------
 		// Read GPS Register
