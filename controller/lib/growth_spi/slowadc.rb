@@ -27,12 +27,13 @@ module growth_spi
     CURRENT_VOLTAGE_RAIL = {2=>"12V", 3=> "5V", 4=>"3.3V"}
     SLOWADC_LABEL = {5=>"Slow ADC 5", 6=>"Slow ADC 6", 7=>"Slow ADC 7"}
 
-    # Returns a hash containing ADC read result.
+    # Reads 8ch of MCP3208 and returns a hash containing ADC read result.
     # {
     #   0 => {"raw"=>103, "voltage"=1000, "converted_value"=>1444, "converter_string"=>"Temperature xx degC"},
     #   1 => {"raw"=>103, "voltage"=1000, "converted_value"=>1444, "converter_string"=>"Temperature xx degC"},
     #   ...
     # }
+    # @return [Hash] hash containing 8 AD-converted values
     def self.read()
       result = {}
       # Read ADC values

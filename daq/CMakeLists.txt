@@ -15,8 +15,11 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "build type")
 # Include path
 #=============================================
 include_directories(
-  .
-  picojson
+  src
+  include/picojson
+  include/SpaceWireRMAPLibrary/includes/SpaceWireRMAPLibrary
+  include/XMLUtilities/include
+  include/CxxUtilities/includes
 )
 
 #=============================================
@@ -31,15 +34,14 @@ link_directories(
 #---------------------------------------------
 # Executable source
 #---------------------------------------------
-add_executable(growth_adc_daq
-  growth_adc_daq.cc
-
+add_executable(growth_daq
+  src/growth_daq.cc
 )
 
 #---------------------------------------------
 # Linked libraries
 #---------------------------------------------
-target_link_libraries(growth_adc_daq
+target_link_libraries(growth_daq
   cfitsio
   yaml-cpp
   zmq
@@ -51,5 +53,5 @@ target_link_libraries(growth_adc_daq
 #=============================================
 # Installs
 #=============================================
-install_targets(/bin growth_adc_daq)
+install_targets(/bin growth_daq)
 
