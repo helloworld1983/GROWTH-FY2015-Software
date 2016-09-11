@@ -1,4 +1,4 @@
-# growth_adc_daq
+# growth_daq
 
 A DAQ program that 
 
@@ -16,7 +16,7 @@ A DAQ program that
 
 ```
 mkdir build
-cmake /.../repo/daq/src -DCMAKE_INSTALL_PREFIX=$HOME
+cmake /.../repo/daq -DCMAKE_INSTALL_PREFIX=$HOME
 make -j2
 ```
 
@@ -24,9 +24,9 @@ make -j2
 
 ```
 Usage:
-$ growth_adc_daq (serial device) (configuration file) (exposure in sec)
+$ growth_daq (serial device) (configuration file) (exposure in sec)
 
 Example:
-$ growth_adc_daq /dev/ttyUSB1 configuration.yaml 100
+$ growth_daq /dev/ttyUSB1 configuration.yaml 100
 ```
 
