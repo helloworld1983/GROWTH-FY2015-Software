@@ -25,16 +25,17 @@ module growth_spi
     #
     # @param ch output channel (0 or 1)
     # @param voltage_in_mV output voltage in mV (0-3300 mV)
+    # @return [Boolean] true if successfully set, false if not
     def self.set_output(ch, voltage_in_mV)
       # Check parameters
       if(ch<0 or ch>1)then
         self.logger.error("SlowDAC Output channel should 0 or 1 (#{ch} provided)")
-        return
+        return false
       end
 
       if(voltage_in_mV<0 or voltage_in_mV>3300)then
         self.logger.error("SlowDAC Output voltage should be >=0 and <=3300 (#{voltage_in_mV} provided)")
-        return
+        return false
       end
 
       # Construct SPI instance
@@ -45,10 +46,11 @@ module growth_spi
           self.logger.info("SlowDAC sets Ch. #{ch} voltage at #{"%.3f"%(value/1000.0)} V")
           spi.write [ register_value/0x100, register_value%0x100 ]
         end
+        return true
       rescue
-
+        self.logger.error("SlowDAC failed to set DAC output voltage")
+        return false
       end
     end
   end
-
 end

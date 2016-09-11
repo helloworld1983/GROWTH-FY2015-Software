@@ -3,7 +3,7 @@
 require "pi_piper"
 require "json"
 
-module growth_spi
+module GROWTH
 
   # Provides Slow ADC read function.
   class SlowADC
