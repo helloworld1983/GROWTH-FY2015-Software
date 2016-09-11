@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 
-sudo gem install pi_piper
+gem install pi_piper
+gem install git
+gem install rbczmq
+gem install pry

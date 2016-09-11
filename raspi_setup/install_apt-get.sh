@@ -36,6 +36,7 @@ sudo apt-get install -y python-zmq
 sudo apt-get install -y rails
 sudo apt-get install -y ruby
 sudo apt-get install -y ruby-dev
+sudo apt-get install -y ruby-ffi
 sudo apt-get install -y subversion
 sudo apt-get install -y supervisor
 sudo apt-get install -y swig
@@ -44,4 +45,3 @@ sudo apt-get install -y wget
 sudo apt-get install -y wicd-curses
 sudo apt-get install -y zlib1g-dev
 sudo apt-get install -y zsh
-
