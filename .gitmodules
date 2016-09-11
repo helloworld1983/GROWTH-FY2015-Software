@@ -10,3 +10,6 @@
 [submodule "daq/include/picojson"]
 	path = daq/include/picojson
 	url = https://github.com/kazuho/picojson
+[submodule "lib/Adafruit_Python_SSD1306"]
+	path = lib/Adafruit_Python_SSD1306
+	url = https://github.com/adafruit/Adafruit_Python_SSD1306
