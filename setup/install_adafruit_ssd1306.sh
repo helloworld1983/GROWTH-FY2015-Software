@@ -1,16 +1,30 @@
 #!/usr/bin/env bash
 
+source ./setenv.sh
+
 sudo apt-get install -y build-essential python-dev python-pip
 sudo pip install RPi.GPIO
 
-mkdir -p $HOME/work/install
-pushd $HOME/work/install
-git clone https://github.com/adafruit/Adafruit_Python_SSD1306
-pushd Adafruit_Python_SSD1306
-sudo python setup.py install
+if [ ! -d ${git_dir}/${repo} ]; then
+  echo "Error: git repo does not exist (expected at ${git_dir}/${repo}). Please run 00_setup_all.sh"
+  exit -1
+fi
 
-#check build
-gpio -v
+pushd ${git_dir}/${repo}
+  if [ ! -d lib/Adafruit_Python_SSD1306 ]; then
+    git submodule init
+    git submodule update
+  fi
 
-popd
+  if [ ! -d lib/Adafruit_Python_SSD1306 ]; then
+    echo "Error: failed to clone Adafruit_Python_SSD1306"
+    exit -1
+  fi
+
+  pushd lib/Adafruit_Python_SSD1306
+    # Execute the install script
+    sudo python setup.py install
+    # Check build
+    gpio -v
+  popd
 popd
