@@ -17,7 +17,7 @@ import ImageFont
 
 # Constants
 ip_address = "127.0.0.1"
-port_number = 5555
+port_number = 10010
 RST = 24  # Raspberry Pi pin configuration:
 
 class DisplayThread(threading.Thread):

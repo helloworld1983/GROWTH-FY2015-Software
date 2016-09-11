@@ -43,7 +43,7 @@ end
 
 
 class DetectorController
-	PortNumber   = 5555
+	PortNumber   = 10000
 	LogMessageControllerStarted = "controller daemon started"
 	LogMessageControllerStopped = "controller daemon stopped"
 
