@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 sudo apt-get install -y build-essential python-dev python-pip
 sudo pip install RPi.GPIO

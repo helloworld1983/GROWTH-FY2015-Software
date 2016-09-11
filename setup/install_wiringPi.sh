@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 mkdir -p $HOME/work/install
 pushd $HOME/work/install
