@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
+apt-get install -y software-properties-common
 apt-get update
 apt-get install -y binutils
 apt-get install -y build-essential
 apt-get install -y chromium
-apt-get install -y cmake
 apt-get install -y curl
 apt-get install -y curl-dev
 apt-get install -y dpkg-dev
@@ -20,6 +20,7 @@ apt-get install -y libexpat-dev
 apt-get install -y libjpeg8-dev
 apt-get install -y libncurses-dev
 apt-get install -y libssl-dev
+apt-get install -y libtool-bin
 apt-get install -y libx11-dev
 apt-get install -y libxerces-c-dev
 apt-get install -y libxext-dev
