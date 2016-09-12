@@ -137,7 +137,7 @@ module GROWTH
 			# Controller commands
 			if(command=="stop")then
 				@stopped = true
-				return {"status": "ok", "messaeg": "Controller has been stopped"}.to_json
+				return {status: "ok", messaeg: "Controller has been stopped"}.to_json
 			end
 
 			# Subsystem commands
@@ -147,12 +147,12 @@ module GROWTH
 					return controller_module.send(command, option)
 				end
 			else
-				subsystem_not_found_message = {"status": "error", "message": "Subsystem '#{subsystem}' not found"}.to_json	
+				subsystem_not_found_message = {status: "error", message: "Subsystem '#{subsystem}' not found"}.to_json	
 				return subsystem_not_found_message
 			end
 
 			# If command not found, return error message
-			command_not_found_message = {"status": "error", "message": "Command '#{subsystem}.#{command}' not found"}.to_json
+			command_not_found_message = {status: "error", message: "Command '#{subsystem}.#{command}' not found"}.to_json
 			return command_not_found_message
 		end
 
@@ -188,7 +188,7 @@ module GROWTH
 
 			stream_id = "detector-status"
 			url = "http://api-m2x.att.com/v2/devices/#{@device_id}/streams/#{stream_id}/value"
-			json = { "value": str }.to_json
+			json = { value: str }.to_json
 			@logger.info "URL = #{url}"
 			@logger.info "json = #{json}"
 			`curl -i -X PUT #{url} -H "X-M2X-KEY: #{@primary_api_key}" -H "Content-Type: application/json" -d "#{json.gsub('"','\"')}"`

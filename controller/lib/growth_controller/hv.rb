@@ -1,5 +1,7 @@
-require "growth_io/slowdac"
-require "growth_io/gpio"
+require "growth_if/slowdac"
+require "growth_if/gpio"
+
+module GROWTH
 
 class ControllerModuleHV < ControllerModule
 	HV_CHANNEL_LOWER = 0
@@ -83,4 +85,6 @@ class ControllerModuleHV < ControllerModule
 		# Return message
 		return {status: "ok", message:"hv.off executed", ch:option_json["ch"].to_i}.to_json
 	end
+end
+
 end

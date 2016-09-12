@@ -5,14 +5,14 @@ require "logger"
 module GROWTH
 	class GPIO
 		# Construct Pin instances
-		self.led = [PiPiper::Pin.new(:pin => 26, :direction => :out),
+		@@led = [PiPiper::Pin.new(:pin => 26, :direction => :out),
 		            PiPiper::Pin.new(:pin => 20, :direction => :out)]
-		self.hv  = [PiPiper::Pin.new(:pin => 27, :direction => :out), # Rev1.1 HV0
+		@@hv  = [PiPiper::Pin.new(:pin => 27, :direction => :out), # Rev1.1 HV0
 		            PiPiper::Pin.new(:pin => 22, :direction => :out)] # Rev1.1 HV1
-		self.slide_switch = PiPiper::Pin.new(:pin => 21, :direction => :in)
+		@@slide_switch = PiPiper::Pin.new(:pin => 21, :direction => :in)
 
 		# Logger instance
-		self.logger = Logger.new(STDOUT)
+		@@logger = Logger.new(STDOUT)
 
 		# Sets LED status.
 		# @param ch 0 or 1
@@ -21,17 +21,17 @@ module GROWTH
 		def self.set_led(ch, status=:on)
 			# Check channel
 			if(ch<0 or ch>1)then
-				self.logger.error("GPIO invalid LED channel (0 or 1; #{ch} provided)")
+				@@logger.error("GPIO invalid LED channel (0 or 1; #{ch} provided)")
 				return false
 			end
 
 			# Set LED output status
 			if(status==:on)then
-				led[ch].on
+				@@led[ch].on
 			elsif(status==:off)then
-				led[ch].off
+				@@led[ch].off
 			else
-				self.logger.error("GPIO invalid LED status (:on or :off; #{status} provided)")
+				@@logger.error("GPIO invalid LED status (:on or :off; #{status} provided)")
 				return false
 			end
 
@@ -45,17 +45,17 @@ module GROWTH
 		def self.set_hv(ch, status=:on)
 			# Check channel
 			if(ch<0 or ch>1)then
-				self.logger.error("GPIO invalid HV channel (0 or 1; #{ch} provided)")
+				@@logger.error("GPIO invalid HV channel (0 or 1; #{ch} provided)")
 				return false
 			end
 
 			# Set HV output status
 			if(status==:on)then
-				hv[ch].on
+				@@hv[ch].on
 			elsif(status==:off)then
-				hv[ch].off
+				@@hv[ch].off
 			else
-				self.logger.error("GPIO invalid HV status (:on or :off; #{status} provided)")
+				@@logger.error("GPIO invalid HV status (:on or :off; #{status} provided)")
 				return false
 			end
 
@@ -68,15 +68,16 @@ module GROWTH
 		def self.is_hv_on?(ch=0)
 			# Check channel
 			if(ch<0 or ch>1)then
-				self.logger.error("GPIO invalid HV channel (0 or 1; #{ch} provided)")
+				@@logger.error("GPIO invalid HV channel (0 or 1; #{ch} provided)")
 				return false
 			end
-			return hv[ch].on?
+			return @@hv[ch].on?
 		end
 
 		# Checks the slide switch status
 		# @return true if on, falsei if off
 		def self.is_slide_switch_on?()
-			return slide_switch.on?()
+			return @@slide_switch.on?()
 		end
+	end
 end

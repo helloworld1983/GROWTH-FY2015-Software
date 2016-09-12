@@ -1,3 +1,7 @@
+require "growth_controller/controller_module"
+
+module GROWTH
+
 class ControllerModuleDetector < ControllerModule
 	
 	def initialize(name)
@@ -48,4 +52,6 @@ class ControllerModuleDetector < ControllerModule
 	def ping(option_json)
 		return {status: "ok", time: Time.now}.to_json
 	end
+end
+
 end

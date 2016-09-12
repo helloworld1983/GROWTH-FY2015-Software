@@ -3,6 +3,8 @@ require "json"
 require "yaml"
 require "socket"
 
+module GROWTH
+
 class ControllerModuleDisplay < ControllerModule
 	# TCP port number of display server
 	DisplayServerPortNumber = 10010
@@ -91,4 +93,6 @@ class ControllerModuleDisplay < ControllerModule
 	def ping(option_json)
 		return send_command({command: "ping"})
 	end
+end
+
 end
