@@ -2,43 +2,52 @@ require "growth_io/slowdac"
 require "growth_io/gpio"
 
 class ControllerModuleHV < ControllerModule
-	HVChannelLower = 0
-	HVChannelUpper = 3
+	HV_CHANNEL_LOWER = 0
+	HV_CHANNEL_UPPER = 3
+
+	HV_VALUE_IN_MILLI_VOLT_LOWER = 0
+	HV_VALUE_IN_MILLI_VOLT_UPPER = 3300
+
 	def initialize(name)
 		super(name)
-		defineCommand("on")
-		defineCommand("off")
+		define_command("on")
+		define_command("off")
 	end
 
-	def isFY2015()
-		if(@controller.detectorID.include?("growth-fy2015"))then
+	def is_fy2015()
+		if(@controller.detector_id.include?("growth-fy2015"))then
 			return true
 		else
 			return false
 		end
 	end
 
-	def on(optionJSON)
+	def on(option_json)
 		# Check option
-		if(optionJSON["ch"]==nil)then
+		if(option_json["ch"]==nil)then
 			return {status: "error", message: "hv.on command requires channel option"}.to_json
 		end
-		# Parse channel option
-		ch = optionJSON["ch"].to_i
-		if(ch<HVChannelLower or ch>HVChannelUpper)then
+		# Parse channel option and value_in_mV option
+		ch = option_json["ch"].to_i
+		if(ch<HV_CHANNEL_LOWER or ch>HV_CHANNEL_UPPER)then
 			return {status: "error", message: "Invalid channel index #{ch}"}.to_json
 		end
 		# Turn on HV
-		if(isFY2015())then
+		if(is_fy2015())then
 			# FY2015 HV on command
 			`hv_on`
 		else
 			# FY2016 onwards HV on command
-			if(optionJSON["value_in_mV"]==nil)then
+			if(option_json["value_in_mV"]==nil)then
 				return {status: "error", message: "hv.on command requires DAC output voltage in mV"}.to_json
 			end
+			# Check value range
+			value_in_mV = option_json["value_in_mV"]
+			if(value_in_mV<HV_VALUE_IN_MILLI_VOLT_LOWER or value_in_mV>HV_VALUE_IN_MILLI_VOLT_UPPER)then
+				return {status: "error", message: "hv.on command received invalid 'voltage in mV' of #{value_in_mV}"}.to_json
+			end
 			# Set HV value
-			if(!GROWTH.SlowDAC.set_output(ch, optionJSON["value_in_mV"]))then
+			if(!GROWTH.SlowDAC.set_output(ch, value_in_mV))then
 				return {status: "error", message: "hv.on command failed to set DAC output voltage (SPI error?)"}.to_json
 			end
 			# Turn on HV output
@@ -46,22 +55,22 @@ class ControllerModuleHV < ControllerModule
 		end
 		# Return message
 		return { #
-			status: "ok", message:"hv.on executed", ch:optionJSON["ch"].to_i, #
-			value_in_mV:optionJSON["value_in_mV"].to_i}.to_json
+			status: "ok", message:"hv.on executed", ch:option_json["ch"].to_i, #
+			value_in_mV:value_in_mV.to_i}.to_json
 	end
 
-	def off(optionJSON)
+	def off(option_json)
 		# Check option
-		if(optionJSON["ch"]==nil)then
+		if(option_json["ch"]==nil)then
 			return {status: "error", message: "hv.off command requires channel option"}.to_json
 		end
 		# Parse channel option
-		ch = optionJSON["ch"].to_i
-		if(ch<HVChannelLower or ch>HVChannelUpper)then
+		ch = option_json["ch"].to_i
+		if(ch<HV_CHANNEL_LOWER or ch>HV_CHANNEL_UPPER)then
 			return {status: "error", message: "Invalid channel index #{ch}"}.to_json
 		end
 		# Turn off HV
-		if(isFY2015())then
+		if(is_fy2015())then
 			# FY2015 HV off command
 			`hv_off`
 		else
@@ -72,6 +81,6 @@ class ControllerModuleHV < ControllerModule
 			GROWTH.GPIO.set_hv(ch,:off)
 		end
 		# Return message
-		return {status: "ok", message:"hv.off executed", ch:optionJSON["ch"].to_i}.to_json
+		return {status: "ok", message:"hv.off executed", ch:option_json["ch"].to_i}.to_json
 	end
 end

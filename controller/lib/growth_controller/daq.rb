@@ -3,9 +3,9 @@ require "json"
 require "yaml"
 require "socket"
 
-class ControllerModuleDisplay < ControllerModule
+class ControllerModuleDAQ < ControllerModule
 	# TCP port number of display server
-	DisplayServerPortNumber = 10010
+	DAQ_ZMQ_PORT_NUMBER = 10000
 
 	def initialize(name)
 		super(name)
@@ -14,21 +14,21 @@ class ControllerModuleDisplay < ControllerModule
 		define_command("connected")
 
 		@logger = Logger.new(STDOUT)
-		@logger.progname = "ControllerModuleDisplay"
+		@logger.progname = "ControllerModuleDAQ"
 
 		connect()
 	end
 
 	private
 	def connect()
-		@logger.info("Connecting to display server...")
+		@logger.info("Connecting to DAQ ZeroMQ server...")
 		@context = ZMQ::Context.new
 		@requester = context.socket(ZMQ::REQ)
 		begin
-			$requester.connect("tcp://localhost:#{DisplayServerPortNumber}")
-			@logger.info("Connected to display server")
+			$requester.connect("tcp://localhost:#{DAQ_ZMQ_PORT_NUMBER}")
+			@logger.info("Connected to DAQ ZeroMQ server")
 		rescue
-			@logger.error("Connection failed. It seems Controller is not running")
+			@logger.error("Connection failed. It seems the DAQ program is not running")
 			@requester = Nil
 		end
 	end
@@ -59,22 +59,23 @@ class ControllerModuleDisplay < ControllerModule
 	#---------------------------------------------
 	# Implemented commands
 	#---------------------------------------------
-	# Clears display
-	def clear(option_json)
+	# Returns detectorID
+	def clear(optionJSON)
 		@logger.debug("clear command invoked")
-		return send_command({command: "clear"})
+		return sendCommand({command: "clear"})
 	end
+	alias detectorID id
 
 	# Displays string
-	# option_json should contain "message" entry.
-	def display(option_json)
+	# optionJSON should contain "message" entry.
+	def display(optionJSON)
 		@logger.debug("display command invoked")
-		return send_command({command: "display", option:option_json})
+		return sendCommand({command: "display", option:optionJSON})
 	end
 
 	# Returns the status of connection to the
 	# display server.
-	def connected(option_json)
+	def connected(optionJSON)
 		if(@requester==Nil)then
 			connect()
 		end
@@ -86,7 +87,7 @@ class ControllerModuleDisplay < ControllerModule
 	end
 
 	# Ping the server
-	def ping(option_json)
+	def ping(optionJSON)
 		return send_command({command: "ping"})
 	end
 end

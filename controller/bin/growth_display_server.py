@@ -135,8 +135,8 @@ class DisplayThread(threading.Thread):
                 self._update_display()
 
 # Instantiate DisplayServer
-displayThread = DisplayThread()
-displayThread.start()
+display_thread = DisplayThread()
+display_thread.start()
 
 # Main loop
 def run_server():
@@ -144,45 +144,48 @@ def run_server():
     responder = context.socket(zmq.REP)
     responder.bind("tcp://{:s}:{:d}".format(ip_address, port_number))
 
-    displayThread.display(["Waiting for a client", "at {}".format(ip_address)])
+    display_thread.display(["Waiting for a client", "at {}".format(ip_address)])
 
     while True:
         # Wait until a message from a client is received
         request = responder.recv()
         print "Recieved request: [%s]" % request
         # Convert to a JSON object
-        jsonCommand = json.loads(request)
-        jsonReply = {}
+        json_command = json.loads(request)
+        json_reply = {}
         # Process command if the received JSON contains "command" entry
-        if "command" in jsonCommand:
-            if jsonCommand["command"] == "display":
-                if "option" in jsonCommand and "message" in jsonCommand["option"]:
-                    displayThread.display(jsonCommand["option"]["message"])
-                    jsonReply = {"status": "ok",
+        if "command" in json_command:
+            if json_command["command"] == "display":
+                if "option" in json_command and "message" in json_command["option"]:
+                    display_thread.display(json_command["option"]["message"])
+                    json_reply = {"status": "ok",
                                  "message": "Message displayed"}
                 else:
                     message_string = "'message' option not found for 'display' command"
-                    jsonReply = {"status": "error", "message": message_string}
-            elif jsonCommand["command"] == "clear":
-                displayThread.clear()
-                jsonReply = {"status": "ok", "message": "Display cleaered"}
-            elif jsonCommand["command"] == "stop":
-                displayThread.stop()
-                jsonReply = {"status": "ok",
+                    json_reply = {"status": "error", "message": message_string}
+            elif json_command["command"] == "clear":
+                display_thread.clear()
+                json_reply = {"status": "ok", "message": "Display cleaered"}
+            elif json_command["command"] == "stop":
+                display_thread.stop()
+                json_reply = {"status": "ok",
                              "message": "Display server thread stopped"}
+            elif json_command["command"] == "ping":
+                json_reply = {"status": "ok",
+                             "message": "responding to a ping"}
             else:
-                message_string = "invalid command '{}'".format(jsonCommand["command"])
-                jsonReply = {"status": "error", "message": message_string}
+                message_string = "invalid command '{}'".format(json_command["command"])
+                json_reply = {"status": "error", "message": message_string}
         else:
             print("Warning: received message does not contain 'command'")
             print("---------------------------------------------")
-            print(jsonCommand)
+            print(json_command)
             print("---------------------------------------------")
-            jsonReply = {"status": "error", "message": "invalid command"}
-        responder.send(json.dumps(jsonReply))
+            json_reply = {"status": "error", "message": "invalid command"}
+        responder.send(json.dumps(json_reply))
 
     # Finalize
-    displayThread.stop()
+    display_thread.stop()
 
 # Define signal handler to stop DisplayServer thread
 # Note: If this is not implemented, the main thread will stop when
@@ -191,7 +194,7 @@ def run_server():
 #       kill command from the shell).
 def signal_handler(signal, frame):
     print('Ctrl+C is received! Finishing the program.')
-    displayThread.stop()
+    display_thread.stop()
     sys.exit(0)
 
 # Register the signal handler

@@ -1,31 +1,32 @@
 class ControllerModuleDetector < ControllerModule
+	
 	def initialize(name)
 		super(name)
-		defineCommand("id")
-		defineCommand("ip")
-		defineCommand("hash")
-		defineCommand("ping")
+		define_command("id")
+		define_command("ip")
+		define_command("hash")
+		define_command("ping")
 	end
 
 	#---------------------------------------------
 	# Implemented commands
 	#---------------------------------------------
 	# Returns detectorID
-	def id(optionJSON)
+	def id(option_json)
 		return {status: "ok", detectorID: controller.detectorID}.to_json
 	end
-	alias detectorID id
+	alias detector_id id
 
 	# Returns IP address
-	def ip(optionJSON)
+	def ip(option_json)
 		# First, search for WiFi I/F.
 		# If no WiFi interface with IP address assigned is found,
 		# then proceed to the wired connection
-		ifNames = ["wlan0", "eth0"]
-		ifNames.each(){|ifName|
-			ifAddrresses = Socket.getifaddrs.select{|x| (x.name == ifName) and x.addr.ipv4?}
-			if(ifAddrresses!=nil and ifAddrresses.length!=0)then
-				ip = ifAddrresses.first.addr.ip_address
+		interface_names = ["wlan0", "eth0"]
+		interface_names.each(){|ifName|
+			interface_addrresses = Socket.getifaddrs.select{|x| (x.name == ifName) and x.addr.ipv4?}
+			if(interface_addrresses!=nil and interface_addrresses.length!=0)then
+				ip = interface_addrresses.first.addr.ip_address
 				return {status: "ok", ip: ip}.to_json
 			end
 		}
@@ -34,17 +35,17 @@ class ControllerModuleDetector < ControllerModule
 	end
 
 	# Returns git repo hash
-	def hash(optionJSON)
-		if(File.exist?(GROWTHRepository))then
-			g = Git.open(GROWTHRepository)
+	def hash(option_json)
+		if(File.exist?(GROWTH::GROWTH_REPOSITORY))then
+			g = Git.open(GROWTH::GROWTH_REPOSITORY)
 			return {status: "ok", hash: g.log()[-1].sha}.to_json
 		else
-			return {status: "error", message: "GRWOTH git repository '#{GROWTHRepository}' not found "}.to_json
+			return {status: "error", message: "GRWOTH git repository '#{GROWTH::GROWTH_REPOSITORY}' not found "}.to_json
 		end
 	end
 
 	# Reply to ping
-	def ping(optionJSON)
+	def ping(option_json)
 		return {status: "ok", time: Time.now}.to_json
 	end
 end
