@@ -2,6 +2,7 @@
 
 apt-get install -y software-properties-common
 apt-get update
+sudo apt-get install -y automake
 apt-get install -y binutils
 apt-get install -y build-essential
 apt-get install -y chromium
