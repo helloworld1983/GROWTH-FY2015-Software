@@ -100,6 +100,18 @@ class ConsoleModuleDisplay < ConsoleModule
 	end
 end
 
+class ConsoleModuleHK < ConsoleModule
+	def initialize(requester, name)
+		super(requester, name)
+		@logger.progname = "ConsoleModuleHK"
+	end
+
+	# Clears the display output
+	def read()
+		return send_command("read")
+	end
+end
+
 logger = Logger.new(STDOUT)
 logger.progname = "growth_console"
 

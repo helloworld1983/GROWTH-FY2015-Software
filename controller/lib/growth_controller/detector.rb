@@ -13,7 +13,7 @@ class ControllerModuleDetector < ControllerModule
 	#---------------------------------------------
 	# Returns detectorID
 	def id(option_json)
-		return {status: "ok", detectorID: controller.detectorID}.to_json
+		return {status: "ok", detector_id: controller.detector_id}.to_json
 	end
 	alias detector_id id
 

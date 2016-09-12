@@ -24,6 +24,8 @@ class ControllerModuleDisplay < ControllerModule
 		@logger.info("Connecting to display server...")
 		@context = ZMQ::Context.new
 		@requester = context.socket(ZMQ::REQ)
+		@requester.recv_timeout = 1
+		@requester.send_timeout = 1
 		begin
 			$requester.connect("tcp://localhost:#{DisplayServerPortNumber}")
 			@logger.info("Connected to display server")

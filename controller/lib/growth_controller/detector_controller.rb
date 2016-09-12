@@ -50,6 +50,7 @@ module GROWTH
 			add_controller_module(GROWTH.ControllerModuleDetector.new("det"))
 			add_controller_module(GROWTH.ControllerModuleHV.new("hv"))
 			add_controller_module(GROWTH.ControllerModuleDisplay.new("display"))
+			add_controller_module(GROWTH.ControllerModuleDisplay.new("hk"))
 		end
 
 		private
