@@ -1,4 +1,5 @@
 require "growth_controller/controller_module"
+require "git"
 
 module GROWTH
 

@@ -24,6 +24,8 @@ class ControllerModuleDAQ < ControllerModule
 		@logger.info("Connecting to DAQ ZeroMQ server...")
 		@context = ZMQ::Context.new
 		@requester = context.socket(ZMQ::REQ)
+		@requester.recv_timeout = 1
+		@requester.send_timeout = 1
 		begin
 			$requester.connect("tcp://localhost:#{DAQ_ZMQ_PORT_NUMBER}")
 			@logger.info("Connected to DAQ ZeroMQ server")
@@ -40,7 +42,7 @@ class ControllerModuleDAQ < ControllerModule
 			connect()
 		end
 		if(@requester==Nil)then
-			return {status: "error", message: "Could not connect to display server"}.to_json
+			return {status: "error", message: "Could not connect to DAQ ZeroMQ server"}.to_json
 		end
 		@requester.send(hash.to_json.to_s)
 		return receive_reply()
@@ -59,35 +61,8 @@ class ControllerModuleDAQ < ControllerModule
 	#---------------------------------------------
 	# Implemented commands
 	#---------------------------------------------
-	# Returns detectorID
 	def clear(optionJSON)
 		@logger.debug("clear command invoked")
 		return sendCommand({command: "clear"})
-	end
-	alias detectorID id
-
-	# Displays string
-	# optionJSON should contain "message" entry.
-	def display(optionJSON)
-		@logger.debug("display command invoked")
-		return sendCommand({command: "display", option:optionJSON})
-	end
-
-	# Returns the status of connection to the
-	# display server.
-	def connected(optionJSON)
-		if(@requester==Nil)then
-			connect()
-		end
-		if(@requester!=Nil)then
-			return {status: "ok", message: "true"}.to_json
-		else
-			return {status: "ok", message: "false"}.to_json
-		end
-	end
-
-	# Ping the server
-	def ping(optionJSON)
-		return send_command({command: "ping"})
 	end
 end

@@ -1,10 +1,4 @@
 #!/usr/bin/env ruby
-require "rbczmq"
-require "json"
-require "yaml"
-require "socket"
-require "git"
-
 require "growth_controller/detector_controller"
 
 # 
@@ -14,5 +8,5 @@ require "growth_controller/detector_controller"
 # to start/stop data acquisition, and to retrieve internal status of the detector.
 # 
 
-controller = GROWTH::DetectorController.new("detectorDB.json")
+controller = GROWTH::DetectorController.new()
 controller.run()
