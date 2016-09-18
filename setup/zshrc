@@ -368,3 +368,8 @@ function fp(){
 function set_date(){
 	echo "date -s '`date +'%Y%m%dT%H:%M:%S'`'"
 }
+
+export RUBYLIB=/home/pi/git/GROWTH-FY2015-Software/controller/lib:$RUBYLIB
+
+export GROWTH_REPOSITORY=/home/pi/git/GROWTH-FY2015-Software
+export GROWTH_KEY_FILE=/home/pi/git/GROWTH-Keys/growth-keys.json

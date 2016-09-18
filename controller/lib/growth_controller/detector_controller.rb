@@ -22,7 +22,7 @@ module GROWTH
     LOG_MESSAGE_CONTROLLER_STOPPED = "controller daemon stopped"
 
     # Constructs an instance, and then start ZeroMQ server
-    def initialize(detector_config_file_path)
+    def initialize()
       @logger = Logger.new(STDOUT)
       @logger.progname = "DetectorController"
 
@@ -34,7 +34,7 @@ module GROWTH
 
       # Initialize instance variables
       @stopped = false
-      controller_modules = {}
+      @controller_modules = {}
 
       # Load detector configuration file and M2X keys
       load_growth_config_file()
@@ -49,10 +49,10 @@ module GROWTH
       @logger.info "Controller started"
 
       # Add controller modules
-      add_controller_module(GROWTH.ControllerModuleDetector.new("det"))
-      add_controller_module(GROWTH.ControllerModuleHV.new("hv"))
-      add_controller_module(GROWTH.ControllerModuleDisplay.new("display"))
-      add_controller_module(GROWTH.ControllerModuleDisplay.new("hk"))
+      add_controller_module(ControllerModuleDetector.new("det"))
+      add_controller_module(ControllerModuleHV.new("hv"))
+      add_controller_module(ControllerModuleDisplay.new("display"))
+      add_controller_module(ControllerModuleDisplay.new("hk"))
 
       # Send a log message to M2X
       send_log_to_m2x(LOG_MESSAGE_CONTROLLER_STARTED)
@@ -92,12 +92,15 @@ module GROWTH
       end
 
       # Get file output dir (event file and hk file will be saved in this directory)
-      @outputDir =  @detector_db["storage_path"]
-      if(@outputDir==nil or @outputDir=="" or !File.exist?(@outputDir))then
-        @logger.error "storage_path: 'path_to_output_dir' should appear in #{GROWTH_CONFIG_FILE}."
+      @output_dir = yaml["storage_path"]
+      if(@output_dir==nil or @output_dir=="")then
+        @logger.error "'storage_path' should appear in #{GROWTH_CONFIG_FILE}."
         exit(-1)
       end
-
+      if(!File.exist?(@output_dir))then
+        @logger.error "'storage_path' (#{@output_dir}) does not exist."
+        exit(-1)
+      end
       # Set instance variable and dump the result
       @detector_id = yaml["detectorID"]
       @logger.info "detectorID: #{@detector_id}"
@@ -150,8 +153,8 @@ module GROWTH
       end
 
       # Subsystem commands
-      if(controller_modules[subsystem]!=nil)then
-        controller_module = controller_modules[subsystem]
+      if(@controller_modules[subsystem]!=nil)then
+        controller_module = @controller_modules[subsystem]
         if(controller_module.has_command(command))then
           return controller_module.send(command, option)
         end
@@ -206,7 +209,7 @@ module GROWTH
     # Add ControllerModule instance
     def add_controller_module(controller_module)
       controller_module.controller = self
-      controller_modules[controller_module.name] = controller_module
+      @controller_modules[controller_module.name] = controller_module
       @logger.info "ControllerModule #{controller_module.name} added"
     end
 
