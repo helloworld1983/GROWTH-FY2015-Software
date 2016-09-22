@@ -157,7 +157,7 @@ def run_server():
         if "command" in json_command:
             if json_command["command"] == "display":
                 if "option" in json_command and "message" in json_command["option"]:
-                    display_thread.display(json_command["option"]["message"])
+                    display_thread.display(json_command["option"]["message"].split("\n"))
                     json_reply = {"status": "ok",
                                  "message": "Message displayed"}
                 else:

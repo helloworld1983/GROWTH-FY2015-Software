@@ -26,27 +26,27 @@ class ControllerModuleDisplay < ControllerModule
 	private
 	def connect()
 		@logger.info("Connecting to display server...")
-		@context = ZMQ::Context.new
-		@requester = context.socket(ZMQ::REQ)
-		@requester.recv_timeout = 1
-		@requester.send_timeout = 1
+		@requester = @context.socket(ZMQ::REQ)
 		begin
-			$requester.connect("tcp://localhost:#{DisplayServerPortNumber}")
+			@requester.connect("tcp://localhost:#{DisplayServerPortNumber}")
+			@requester.rcvtimeo = 1000
+			@requester.sndtimeo = 1000
 			@logger.info("Connected to display server")
 		rescue
 			@logger.error("Connection failed. It seems Controller is not running")
-			@requester = Nil
+			@requester = nil
 		end
 	end
 
 	private
 	def send_command(hash)
 		# Connect if necessary
-		if(@requester==Nil)then
+		if(@requester==nil)then
 			connect()
 		end
-		if(@requester==Nil)then
-			return {status: "error", message: "Could not connect to display server"}.to_json
+		if(@requester==nil)then
+			@logger.warn("Continue with being disconnected from display server")
+			return {status: "error", message: "Could not connect to display server"}
 		end
 		@requester.send(hash.to_json.to_s)
 		return receive_reply()
@@ -56,9 +56,11 @@ class ControllerModuleDisplay < ControllerModule
 	def receive_reply()
 		begin
 			reply_message = @requester.recv()
+			@logger.debug(reply_message)
 			return JSON.parse(reply_message)
-		rescue
-			return {status: "error", message: "ZeroMQ communication failed"}.to_json
+		rescue => e
+			@logger.warn("receive_reply() returning error (#{e})")
+			return {status: "error", message: "ZeroMQ communication failed"}
 		end		
 	end
 
@@ -81,13 +83,13 @@ class ControllerModuleDisplay < ControllerModule
 	# Returns the status of connection to the
 	# display server.
 	def connected(option_json)
-		if(@requester==Nil)then
+		if(@requester==nil)then
 			connect()
 		end
-		if(@requester!=Nil)then
-			return {status: "ok", message: "true"}.to_json
+		if(@requester!=nil)then
+			return {status: "ok", message: "true"}
 		else
-			return {status: "ok", message: "false"}.to_json
+			return {status: "ok", message: "false"}
 		end
 	end
 

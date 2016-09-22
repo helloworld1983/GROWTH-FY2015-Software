@@ -4,7 +4,7 @@ require "json"
 require "pry"
 require "logger"
 
-require "growth_controller/detector_controller"
+DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER   = 10000
 
 #---------------------------------------------
 # ConsoleModules
@@ -20,13 +20,13 @@ class ConsoleModule
 	def send_command(command, option_hash={})
 		json_command = {command: name+"."+command, option: option_hash}.to_json
 		@logger.info("Sending command: #{json_command}")
-		$requester.send(json_command.to_s)
+		@requester.send(json_command.to_s)
 		return receive_reply()
 	end
 
 	def receive_reply()
 		begin
-			reply_message = $requester.recv()
+			reply_message = @requester.recv()
 			return JSON.parse(reply_message)
 		rescue
 			return {}.to_json
@@ -112,19 +112,19 @@ class ConsoleModuleHK < ConsoleModule
 	end
 end
 
-logger = Logger.new(STDOUT)
-logger.progname = "growth_console"
+@logger = Logger.new(STDOUT)
+@logger.progname = "growth_console"
 
 #---------------------------------------------
 # Open ZeroMQ client connection
 #---------------------------------------------
 context = ZMQ::Context.new
-logger.info("Connecting to Controller...")
-$requester = context.socket(ZMQ::REQ)
+@logger.info("Connecting to Controller...")
+@requester = context.socket(ZMQ::REQ)
 begin
-	$requester.connect("tcp://localhost:#{GROWTH::DetectorController::DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER}")
+	@requester.connect("tcp://localhost:#{DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER}")
 rescue
-	logger.fatal("connection failed. It seems Controller is not running")
+	@logger.fatal("connection failed. It seems Controller is not running")
 	exit -1
 end
 @logger.info("Connected")
@@ -132,13 +132,14 @@ end
 #---------------------------------------------
 # Instantiate ConsoleModules
 #---------------------------------------------
-det  = ConsoleModuleDetector.new($requester, "det")
-hv   = ConsoleModuleHV.new($requester, "hv")
-disp = ConsoleModuleDisplay.new($requester, "disp")
+det  = ConsoleModuleDetector.new(@requester, "det")
+hv   = ConsoleModuleHV.new(@requester, "hv")
+disp = ConsoleModuleDisplay.new(@requester, "disp")
+hk   = ConsoleModuleHK.new(@requester, "hk")
 
 #---------------------------------------------
 # Start console
 #---------------------------------------------
 binding.pry
 
-$requester.close
+@requester.close

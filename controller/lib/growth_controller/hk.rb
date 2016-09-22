@@ -1,5 +1,7 @@
-require "growth_io/slowadc"
+require "growth_if/slowadc"
 require "rpi"
+
+module GROWTH
 
 class ControllerModuleHK < ControllerModule
 
@@ -10,9 +12,26 @@ class ControllerModuleHK < ControllerModule
 		super(name)
 		define_command("read")
 		
+		@logger = Logger.new(STDOUT)
+		@logger.progname = "ControllerModuleHK"
+
 		# Construct I2C object and BME280 object
 		@i2cbus = RPi::I2CBus.new(BME280_I2C_BUS_NUMBER)
-		@bme = RPi::BME280.new(i2cbus)
+		open_bme280()
+	end
+
+	private
+	def open_bme280()
+		begin
+			@logger.info("Opening BME280...")
+			@bme = RPi::BME280.new(@i2cbus)
+			@logger.info("BME280 successfully opened")
+			return true
+		rescue => e
+			@logger.warn("I2C communication with BME280 returned error (#{e}). Perhaps BME280 is not connected.")
+			@bme = nil
+			return false
+		end
 	end
 
 	def read(option_json)
@@ -20,25 +39,40 @@ class ControllerModuleHK < ControllerModule
 		slowadc_result = {}
 		begin
 			slowadc_result = SlowADC.read()
-		rescue
-			return {status: "error", message: "SlowADC read failed"}.to_json
+		rescue => e
+			@logger.error("Slow ADC read failed (#{e})")
+			return {status: "error", message: "SlowADC read failed (#{e})"}
 		end
 
 		# Read from BME280
 		bme280_result = {}
-		begin
-			@bme.update
-			bme280_result = {
-				temperature: {value:@bme.temperature, units:"degC"},
-				pressure: {value:@bme.pressure, units:"mb"},
-				humidity: {value:@bme.humidity, units:"%"}
-			}
-		rescue
-			return {status: "error", message: "BME280 read failed"}.to_json
+		if (@bme280 == nil) then
+			# If not connected, try to connect to BME280
+			if(open_bme280() == true) then
+				# If successfully opened, continue to read
+				begin
+					@bme.update
+					bme280_result = {
+						temperature: {value:@bme.temperature, units:"degC"},
+						pressure: {value:@bme.pressure, units:"mb"},
+						humidity: {value:@bme.humidity, units:"%"}
+					}
+				rescue
+					@logger.error("BME280 read error")
+					@bme280 = nil
+				end
+			else
+				@logger.warn("Continue without BME280") 
+			end
 		end
-
+		
 		# Return result
 		time = Time.now
-		return {status: "ok", unixtime:time.to_i, time:time.strftime("%Y-%m-%dT%H-%M-%S") hk: {slow_adc:slowadc_result, bme280:bme280_result}}.to_json
+		return {
+			status: "ok", unixtime:time.to_i, time:time.strftime("%Y-%m-%dT%H-%M-%S"),
+			hk: {slow_adc:slowadc_result, bme280:bme280_result}
+		}
 	end
+end
+
 end
