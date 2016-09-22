@@ -51,7 +51,7 @@ module GROWTH
       # Add controller modules
       add_controller_module(ControllerModuleDetector.new("det"))
       add_controller_module(ControllerModuleHV.new("hv"))
-      add_controller_module(ControllerModuleDisplay.new("display"))
+      add_controller_module(ControllerModuleDisplay.new("display", @context))
       add_controller_module(ControllerModuleDisplay.new("hk"))
 
       # Send a log message to M2X

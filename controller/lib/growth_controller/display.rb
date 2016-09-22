@@ -9,12 +9,14 @@ class ControllerModuleDisplay < ControllerModule
 	# TCP port number of display server
 	DisplayServerPortNumber = 10010
 
-	def initialize(name)
+	def initialize(name, zmq_context)
 		super(name)
 		define_command("clear")
 		define_command("display")
 		define_command("connected")
 
+		@context = zmq_context
+		
 		@logger = Logger.new(STDOUT)
 		@logger.progname = "ControllerModuleDisplay"
 
