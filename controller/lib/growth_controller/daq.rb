@@ -7,11 +7,13 @@ class ControllerModuleDAQ < ControllerModule
 	# TCP port number of display server
 	DAQ_ZMQ_PORT_NUMBER = 10000
 
-	def initialize(name)
+	def initialize(name, zmq_context)
 		super(name)
 		define_command("clear")
 		define_command("display")
 		define_command("connected")
+
+		@context = zmq_context
 
 		@logger = Logger.new(STDOUT)
 		@logger.progname = "ControllerModuleDAQ"
@@ -22,12 +24,11 @@ class ControllerModuleDAQ < ControllerModule
 	private
 	def connect()
 		@logger.info("Connecting to DAQ ZeroMQ server...")
-		@context = ZMQ::Context.new
-		@requester = context.socket(ZMQ::REQ)
+		@requester = @context.socket(ZMQ::REQ)
 		@requester.recv_timeout = 1
 		@requester.send_timeout = 1
 		begin
-			$requester.connect("tcp://localhost:#{DAQ_ZMQ_PORT_NUMBER}")
+			@requester.connect("tcp://localhost:#{DAQ_ZMQ_PORT_NUMBER}")
 			@logger.info("Connected to DAQ ZeroMQ server")
 		rescue
 			@logger.error("Connection failed. It seems the DAQ program is not running")
