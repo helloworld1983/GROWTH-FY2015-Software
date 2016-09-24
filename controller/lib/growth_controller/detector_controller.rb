@@ -4,6 +4,7 @@ require "yaml"
 require "socket"
 require "logger"
 
+require "growth_controller/config"
 require "growth_controller/controller_module"
 require "growth_controller/detector"
 require "growth_controller/hv"
@@ -14,7 +15,6 @@ require "growth_controller/daq"
 module GROWTH
   # Constants
   USE_M2X = false
-  GROWTH_CONFIG_FILE = File.expand_path("~/growth_config.yaml")
   GROWTH_KEY_FILE    = ENV["GROWTH_KEY_FILE"]
   GROWTH_REPOSITORY  = ENV["GROWTH_REPOSITORY"]
 
@@ -27,6 +27,10 @@ module GROWTH
     def initialize()
       @logger = Logger.new(STDOUT)
       @logger.progname = "DetectorController"
+
+      # Load configuration
+      @growth_config = GROWTH::Config.new()
+      @detector_id = @growth_config.detector_id
 
       # Use M2X telemetry logging?
       @use_m2x = USE_M2X
@@ -76,38 +80,6 @@ module GROWTH
           exit(-1)
         end
       }
-    end
-
-    # Load YAML configuration file, and set detectorID
-    def load_growth_config_file()
-      # Check file presence
-      if(!File.exist?(GROWTH_CONFIG_FILE))then
-        @logger.error "#{GROWTH_CONFIG_FILE} not found"
-        exit(-1)
-      end
-
-      # Load YAML configuration file
-      @logger.info "Loading #{GROWTH_CONFIG_FILE}"
-      yaml = YAML.load_file(GROWTH_CONFIG_FILE)
-      if(yaml["detectorID"]==nil or yaml["detectorID"]=="")then
-        @logger.error "detectorID not found in #{GROWTH_CONFIG_FILE}"
-        exit(-1)
-      end
-
-      # Get file output dir (event file and hk file will be saved in this directory)
-      @output_dir = yaml["storage_path"]
-      if(@output_dir==nil or @output_dir=="")then
-        @logger.error "'storage_path' should appear in #{GROWTH_CONFIG_FILE}."
-        exit(-1)
-      end
-      if(!File.exist?(@output_dir))then
-        @logger.error "'storage_path' (#{@output_dir}) does not exist."
-        exit(-1)
-      end
-      # Set instance variable and dump the result
-      @detector_id = yaml["detectorID"]
-      @logger.info "detectorID: #{@detector_id}"
-
     end
 
     # Load M2X keys

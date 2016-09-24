@@ -5,15 +5,24 @@ module GROWTH
 
 class ControllerModuleHV < ControllerModule
 	HV_CHANNEL_LOWER = 0
-	HV_CHANNEL_UPPER = 3
+	HV_CHANNEL_UPPER = 1
 
 	HV_VALUE_IN_MILLI_VOLT_LOWER = 0
 	HV_VALUE_IN_MILLI_VOLT_UPPER = 3300
 
 	def initialize(name)
 		super(name)
+		define_command("status")
 		define_command("on")
 		define_command("off")
+		define_command("off_all")
+		@on_off_status = []
+		@hv_value = []
+		# Initialize
+		for i in HV_CHANNEL_LOWER..HV_CHANNEL_UPPER:
+			@on_off_status << "off"
+			@hv_value << 0
+			off({"ch"=>i})
 	end
 
 	def is_fy2015()
@@ -23,7 +32,15 @@ class ControllerModuleHV < ControllerModule
 			return false
 		end
 	end
-
+	
+	def status(option_json)
+		reply = {status: "ok"}
+		for ch in HV_CHANNEL_LOWER..HV_CHANNEL_UPPER
+			reply[ch.to_s] = {status: @on_off_status[ch], value_in_mV: @hv_value[ch]}
+		end
+		return reply
+	end
+	
 	def on(option_json)
 		# Check option
 		if(option_json["ch"]==nil)then
@@ -54,6 +71,9 @@ class ControllerModuleHV < ControllerModule
 			end
 			# Turn on HV output
 			GROWTH.GPIO.set_hv(ch,:on)
+			# Update internal state
+			@on_off_status[ch] = "on"
+			@hv_value[ch] = value_in_mV
 		end
 		# Return message
 		return { #
@@ -81,9 +101,20 @@ class ControllerModuleHV < ControllerModule
 			GROWTH.SlowDAC.set_output(ch, 0)
 			# Turn off HV output
 			GROWTH.GPIO.set_hv(ch,:off)
+			# Update internal state
+			@on_off_status[ch] = "off"
+			@hv_value[ch] = 0
 		end
 		# Return message
 		return {status: "ok", message:"hv.off executed", ch:option_json["ch"].to_i}
+	end
+
+	def off_all(option_json)
+		for ch in HV_CHANNEL_LOWER..HV_CHANNEL_UPPER
+			off({"ch"=>ch})
+		end
+		# Return message
+		return {status: "ok", message:"hv.off_all executed"}
 	end
 end
 

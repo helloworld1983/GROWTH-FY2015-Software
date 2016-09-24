@@ -203,7 +203,11 @@ private:
 		picojson::object replyMessage;
 		replyMessage["status"] = picojson::value("ok");
 		replyMessage["unixTime"] = picojson::value(static_cast<double>(CxxUtilities::Time::getUNIXTimeAsUInt32()));
-		replyMessage["daqStatus"] = picojson::value(static_cast<double>(mainThread->getDAQStatus()));
+		if(mainThread->getDAQStatus()==DAQStatus::Running){
+			replyMessage["daqStatus"] = picojson::value("Running");
+		}else{
+			replyMessage["daqStatus"] = picojson::value("Paused");
+		}
 		replyMessage["outputFileName"] = picojson::value(mainThread->getOutputFileName());
 		replyMessage["elapsedTime"] = picojson::value(static_cast<double>(mainThread->getElapsedTime()));
 		replyMessage["nEvents"] = picojson::value(static_cast<double>(mainThread->getNEvents()));
