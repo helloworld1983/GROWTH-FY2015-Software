@@ -48,7 +48,14 @@ class ControllerModuleDisplay < ControllerModule
 			@logger.warn("Continue with being disconnected from display server")
 			return {status: "error", message: "Could not connect to display server"}
 		end
-		@requester.send(hash.to_json.to_s)
+		begin
+			@requester.send(hash.to_json.to_s)
+		rescue => e
+			@requester.close
+			@requester = nil
+			@logger.warn("send_command() returning error (#{e})")
+			return {status: "error", message: "ZeroMQ send failed (#{e})"}
+		end
 		return receive_reply()
 	end
 
@@ -59,8 +66,10 @@ class ControllerModuleDisplay < ControllerModule
 			@logger.debug(reply_message)
 			return JSON.parse(reply_message)
 		rescue => e
+			@requester.close
+			@requester = nil
 			@logger.warn("receive_reply() returning error (#{e})")
-			return {status: "error", message: "ZeroMQ communication failed"}
+			return {status: "error", message: "ZeroMQ receive failed (#{e})"}
 		end		
 	end
 
