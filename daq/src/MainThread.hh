@@ -37,13 +37,13 @@ public:
 		this->deviceName = deviceName;
 		this->exposureInSec = exposureInSec;
 		this->configurationFile = configurationFile;
-		this->daqStatus = DAQStatus::Paused;
+		setDAQStatus(DAQStatus::Paused);
 	}
 
 public:
 	void run() {
 		using namespace std;
-		daqStatus = DAQStatus::Running;
+		setDAQStatus(DAQStatus::Running);
 		adcBoard = new GROWTH_FY2015_ADC(deviceName);
 
 		fpgaType = adcBoard->getFPGAType();
@@ -171,7 +171,7 @@ public:
 		c.wait(1000);
 		cout << "Deleting ADCBoard instance." << endl;
 		delete adcBoard;
-		daqStatus = DAQStatus::Paused;
+		setDAQStatus(DAQStatus::Paused);
 	}
 
 public:
@@ -240,6 +240,13 @@ private:
 		printf("EventFIFO Count = %zu\n", eventFIFODataCount);
 		printf("TriggerCount = %zu\n", channelModule->getTriggerCount());
 		printf("ADC          = %d\n", channelModule->getCurrentADCValue());
+	}
+
+private:
+	void setDAQStatus(DAQStatus status){
+		daqStatusMutex.lock();
+		daqStatus = status;
+		daqStatusMutex.unlock();
 	}
 
 private:
@@ -363,6 +370,7 @@ private:
 	uint32_t startUnixTimeOfCurrentOutputFile;
 	std::string outputFileName;bool createNewOutputFile;
 	DAQStatus daqStatus;
+	CxxUtilities::Mutex daqStatusMutex;
 };
 
 #endif /* SRC_MAINTHREAD_HH_ */

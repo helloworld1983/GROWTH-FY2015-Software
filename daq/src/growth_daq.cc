@@ -8,7 +8,10 @@ int main(int argc, char* argv[]) {
 
 	// Process arguments
 	if (argc < 4) {
-		cerr << "Provide UART device name (e.g. /dev/tty.usb-aaa-bbb), YAML configuration file, and exposure.." << endl;
+		cout << "Provide UART device name (e.g. /dev/tty.usb-aaa-bbb), YAML configuration file, and exposure." << endl;
+		cout << endl;
+		cout << "If zero or negative exposure is provided, the program pauses after boot." << endl;
+		cout << "An observation is started when it is receives the 'resume' command via ZeroMQ IPC socket." << endl;
 		::exit(-1);
 	}
 	std::string deviceName(argv[1]);
@@ -33,9 +36,13 @@ int main(int argc, char* argv[]) {
 	c.wait(3000);
 #else
 	// Run
-	mainThread->run();
-	messageServer->run();
-	messageServer->join();
+	if (exposureInSec > 0) {
+		mainThread->start();
+	}
+	if (exposureInSec <= 0) {
+		messageServer->start();
+		messageServer->join();
+	}
 	mainThread->join();
 #endif
 
