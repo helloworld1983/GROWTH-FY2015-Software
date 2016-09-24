@@ -9,6 +9,7 @@ require "growth_controller/detector"
 require "growth_controller/hv"
 require "growth_controller/display"
 require "growth_controller/hk"
+require "growth_controller/daq"
 
 module GROWTH
   # Constants
@@ -149,7 +150,7 @@ module GROWTH
       @logger.info "Subsystem: #{subsystem} Command: #{command} Option: #{option}"
 
       # Controller commands
-      if(command=="stop")then
+      if(subsystem=="controller" and command=="stop")then
         @stopped = true
         return {status: "ok", messaeg: "Controller has been stopped"}.to_json
       end

@@ -20,7 +20,14 @@ class ConsoleModule
 	def send_command(command, option_hash={})
 		json_command = {command: name+"."+command, option: option_hash}.to_json
 		@logger.info("Sending command: #{json_command}")
-		@requester.send(json_command.to_s)
+		begin
+			@requester.send(json_command.to_s)
+		rescue => e
+			@logger.error("ZerMQ send failed (#{e})")
+			@requester.close
+			@requester = nil
+			return {status: "error", message: "ZeroMQ send failed (#{e})"}
+		end
 		return receive_reply()
 	end
 
@@ -28,8 +35,11 @@ class ConsoleModule
 		begin
 			reply_message = @requester.recv()
 			return JSON.parse(reply_message)
-		rescue
-			return {}.to_json
+		rescue => e
+			@logger.error("ZerMQ receive failed (#{e})")
+			@requester.close
+			@requester = nil
+			return {status: "error", message: "ZeroMQ receive failed (#{e})"}
 		end
 	end
 
@@ -112,6 +122,37 @@ class ConsoleModuleHK < ConsoleModule
 	end
 end
 
+class ConsoleModuleDAQ < ConsoleModule
+	def initialize(requester, name)
+		super(requester, name)
+		@logger.progname = "ConsoleModuleHK"
+	end
+
+	def ping()
+		return send_command("ping")
+	end
+
+	def stop()
+		return send_command("stop")
+	end
+
+	def pause()
+		return send_command("pause")
+	end
+
+	def resume()
+		return send_command("resume")
+	end
+
+	def status()
+		return send_command("status")
+	end
+
+	def switch_output()
+		return send_command("switch_output")
+	end
+end
+
 @logger = Logger.new(STDOUT)
 @logger.progname = "growth_console"
 
@@ -136,6 +177,7 @@ det  = ConsoleModuleDetector.new(@requester, "det")
 hv   = ConsoleModuleHV.new(@requester, "hv")
 disp = ConsoleModuleDisplay.new(@requester, "disp")
 hk   = ConsoleModuleHK.new(@requester, "hk")
+daq   = ConsoleModuleDAQ.new(@requester, "daq")
 
 #---------------------------------------------
 # Start console

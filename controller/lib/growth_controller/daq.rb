@@ -3,6 +3,8 @@ require "json"
 require "yaml"
 require "socket"
 
+module GROWTH
+
 class ControllerModuleDAQ < ControllerModule
 	# TCP port number of growth_daq ZeroMQ server
 	DAQ_ZMQ_PORT_NUMBER = 10020
@@ -28,10 +30,10 @@ class ControllerModuleDAQ < ControllerModule
 	def connect()
 		@logger.info("Connecting to DAQ ZeroMQ server...")
 		@requester = @context.socket(ZMQ::REQ)
-		@requester.recv_timeout = 1
-		@requester.send_timeout = 1
 		begin
 			@requester.connect("tcp://localhost:#{DAQ_ZMQ_PORT_NUMBER}")
+			@requester.rcvtimeo = 1000
+			@requester.sndtimeo = 1000
 			@logger.info("Connected to DAQ ZeroMQ server")
 		rescue
 			@logger.error("Connection failed. It seems the DAQ program is not running")
@@ -64,7 +66,7 @@ class ControllerModuleDAQ < ControllerModule
 		begin
 			reply_message = @requester.recv()
 			return JSON.parse(reply_message)
-		rescue
+		rescue => e
 			@requester.close
 			@requester = nil
 			@logger.warn("receive_reply() returning error (#{e})")
@@ -75,34 +77,36 @@ class ControllerModuleDAQ < ControllerModule
 	#---------------------------------------------
 	# Implemented commands
 	#---------------------------------------------
-	def ping(optionJSON)
+	def ping(option_json)
 		@logger.debug("ping command invoked")
-		return sendCommand({command: "ping"})
+		return send_command({command: "ping"})
 	end
 
-	def stop(optionJSON)
+	def stop(option_json)
 		@logger.debug("stop command invoked")
-		return sendCommand({command: "stop"})
+		return send_command({command: "stop"})
 	end
 
-	def pause(optionJSON)
+	def pause(option_json)
 		@logger.debug("pause command invoked")
-		return sendCommand({command: "pause"})
+		return send_command({command: "pause"})
 	end
 
-	def resume(optionJSON)
+	def resume(option_json)
 		@logger.debug("resume command invoked")
-		return sendCommand({command: "resume"})
+		return send_command({command: "resume"})
 	end
 
 	def status(optionJSON)
 		@logger.debug("status command invoked")
-		return sendCommand({command: "getStatus"})
+		return send_command({command: "getStatus"})
 	end
 
-	def switch_output(optionJSON)
+	def switch_output(option_json)
 		@logger.debug("switch_output command invoked")
-		return sendCommand({command: "startNewOutputFile"})
+		return send_command({command: "startNewOutputFile"})
 	end
+
+end
 
 end
