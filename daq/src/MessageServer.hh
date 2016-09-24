@@ -16,6 +16,12 @@
 
 #include "MainThread.hh"
 
+#define DEBUG_MESSAGESERVER
+
+#ifdef DEBUG_MESSAGESERVER
+using namespace std;
+#endif
+
 /** Receives message from a client, and process the message.
  * Typical messages include:
  * <ul>
@@ -46,7 +52,9 @@ public:
 			zmq::message_t request;
 			//  Wait for next request from client
 			if (socket.recv(&request)) {
+#ifdef DEBUG_MESSAGESERVER
 				std::cout << "MessageServer: Received " << std::endl;
+#endif
 			} else {
 				if (errno != EAGAIN) {
 					cerr << "Error: MessageServer::run(): receive failed." << endl;
