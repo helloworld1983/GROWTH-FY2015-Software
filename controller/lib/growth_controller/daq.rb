@@ -43,7 +43,7 @@ class ControllerModuleDAQ < ControllerModule
 			connect()
 		end
 		if(@requester==Nil)then
-			return {status: "error", message: "Could not connect to DAQ ZeroMQ server"}.to_json
+			return {status: "error", message: "Could not connect to DAQ ZeroMQ server"}
 		end
 		@requester.send(hash.to_json.to_s)
 		return receive_reply()
@@ -55,7 +55,7 @@ class ControllerModuleDAQ < ControllerModule
 			reply_message = @requester.recv()
 			return JSON.parse(reply_message)
 		rescue
-			return {status: "error", message: "ZeroMQ communication failed"}.to_json
+			return {status: "error", message: "ZeroMQ communication failed"}
 		end		
 	end
 

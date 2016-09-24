@@ -8,6 +8,7 @@ require "growth_controller/controller_module"
 require "growth_controller/detector"
 require "growth_controller/hv"
 require "growth_controller/display"
+require "growth_controller/hk"
 
 module GROWTH
   # Constants
@@ -51,8 +52,8 @@ module GROWTH
       # Add controller modules
       add_controller_module(ControllerModuleDetector.new("det"))
       add_controller_module(ControllerModuleHV.new("hv"))
-      add_controller_module(ControllerModuleDisplay.new("display", @context))
-      add_controller_module(ControllerModuleDisplay.new("hk"))
+      add_controller_module(ControllerModuleDisplay.new("disp", @context))
+      add_controller_module(ControllerModuleHK.new("hk"))
 
       # Send a log message to M2X
       send_log_to_m2x(LOG_MESSAGE_CONTROLLER_STARTED)
@@ -156,10 +157,17 @@ module GROWTH
       if(@controller_modules[subsystem]!=nil)then
         controller_module = @controller_modules[subsystem]
         if(controller_module.has_command(command))then
-          return controller_module.send(command, option)
+          reply = controller_module.send(command, option)
+          if (reply==nil or !reply.instance_of?(Hash)) then
+			@logger.warn("Subsystem '#{subsystem}' returned invalid return value (not Hash)")
+			@logger.warn("Returned value = #{reply}")
+			reply = {}
+          end
+          reply["subsystem"] = subsystem
+          return reply.to_json
         end
       else
-        subsystem_not_found_message = {status: "error", message: "Subsystem '#{subsystem}' not found"}.to_json
+        subsystem_not_found_message = {sender: "detector_controller", status: "error", message: "Subsystem '#{subsystem}' not found"}.to_json
         return subsystem_not_found_message
       end
 
@@ -174,6 +182,7 @@ module GROWTH
     end
 
     # Main loop
+    public
     def run()
       while(!@stopped)
         # Wait for a JSON message from a client

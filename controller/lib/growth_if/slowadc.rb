@@ -47,11 +47,13 @@ module GROWTH
             voltage = adc_value / RESOLUTION_AT_12BIT * V_REF
             converted_string = ""
             converted_value = 0
+            units = ""
             case channel
             when 0, 1 then
                 temp = (voltage-LM60_OFFSET_V)/LM60_COEFFICIENT_V_PER_DEG
                 converted_value = temp
                 converted_string = "#{TEMPERATURE_LABEL[channel]} Temperature #{"%.2f"%temp} degC"
+                units = "degC"
             when 2, 3, 4 then
                 case channel
                 when 2 then
@@ -63,12 +65,15 @@ module GROWTH
                 end
                 converted_value = current_mA
                 converted_string = "#{"%4s"%CURRENT_VOLTAGE_RAIL[channel]} Current #{"%.1f"%current_mA} mA"
+                units = "mA"
             when 5, 6, 7 then
-                converted_value = value
+                converted_value = adc_value
                 converted_string = "#{SLOWADC_LABEL[channel]}"
+                units = "ch"
             end
-            result[channel]= { "raw" => adc_value,  "voltage" => voltagee, #
-              "converted_value" => converted_value, "converted_string" => converted_string }
+            result[channel]= { "raw" => adc_value,  "voltage" => voltage,
+              "converted_value" => converted_value, "converted_string" => converted_string,
+              "units" => units }
           end
       end
       return result
