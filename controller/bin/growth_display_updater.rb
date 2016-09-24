@@ -8,6 +8,7 @@ require "growth_controller/console_modules"
 
 disp = GROWTH::ConsoleModuleDisplay.new("disp")
 
+i=0
 while(i<10)
 	lines = ["GROWTH-FY2016A", Time.now.to_s]
 	disp.display(lines)
