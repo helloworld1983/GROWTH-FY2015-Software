@@ -99,12 +99,16 @@ class ConsoleModuleHV < ConsoleModule
 		@logger.progname = "ConsoleModuleHV"
 	end
 
-	def off()
+	def status()
 		return send_command("status")
 	end
 
-	def on(ch, value_in_mV)
-		return send_command("on", {ch: ch, value_in_mV:value_in_mV})
+	def set(ch, value_in_mV)
+		return send_command("set", {ch: ch, value_in_mV:value_in_mV})
+	end
+	
+	def on(ch)
+		return send_command("on", {ch: ch})
 	end
 
 	def off(ch)

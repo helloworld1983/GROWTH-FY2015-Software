@@ -17,6 +17,7 @@ class ControllerModuleHK < ControllerModule
 
 		# Construct I2C object and BME280 object
 		@i2cbus = RPi::I2CBus.new(BME280_I2C_BUS_NUMBER)
+		@bme=nil
 		open_bme280()
 	end
 
@@ -46,26 +47,36 @@ class ControllerModuleHK < ControllerModule
 
 		# Read from BME280
 		bme280_result = {}
-		if (@bme280 == nil) then
-			# If not connected, try to connect to BME280
-			if(open_bme280() == true) then
-				# If successfully opened, continue to read
+		for trial in 0...5 do
+			if (@bme == nil) then
+				# If not connected, try to connect to BME280
+				if(open_bme280() == false) then
+					@logger.warn("Continue without BME280 (trial #{trial})") 
+				end
+			end
+
+			# If successfully opened, continue to read
+			bme_read_succeeded = false
+			if (@bme != nil) then
 				begin
 					@bme.update
+					bme_read_succeeded = true
+				rescue => e
+					@logger.error("BME280 read error (trial #{trial}) (#{e})")
+					@bme = nil
+				end
+				
+				if bme_read_succeeded == true and @bme != nil then
+					@logger.debug("BME280 read successful (trial #{trial})")
 					bme280_result = {
 						temperature: {value:@bme.temperature, units:"degC"},
 						pressure: {value:@bme.pressure, units:"mb"},
 						humidity: {value:@bme.humidity, units:"%"}
 					}
-				rescue
-					@logger.error("BME280 read error")
-					@bme280 = nil
+					break
 				end
-			else
-				@logger.warn("Continue without BME280") 
 			end
 		end
-		
 		# Return result
 		time = Time.now
 		return {

@@ -43,12 +43,12 @@ module GROWTH
         PiPiper::Spi.begin(PiPiper::Spi::CHIP_SELECT_0) do |spi|
           header = "0b#{ch}0#{NGAIN}#{NSHDN}".to_i(2) << 12
           register_value = header + voltage_in_mV
-          @@logger.info("SlowDAC sets Ch. #{ch} voltage at #{"%.3f"%(value/1000.0)} V")
+          @@logger.info("SlowDAC sets Ch. #{ch} voltage at #{"%.3f"%(voltage_in_mV/1000.0)} V")
           spi.write [ register_value/0x100, register_value%0x100 ]
         end
         return true
-      rescue
-        @@logger.error("SlowDAC failed to set DAC output voltage")
+      rescue => e
+        @@logger.error("SlowDAC failed to set DAC output voltage (#{e})")
         return false
       end
     end

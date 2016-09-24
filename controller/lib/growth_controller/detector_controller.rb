@@ -43,7 +43,6 @@ module GROWTH
       @controller_modules = {}
 
       # Load detector configuration file and M2X keys
-      load_growth_config_file()
       if(USE_M2X)then
         load_keys()
       end
@@ -64,11 +63,14 @@ module GROWTH
       # Send a log message to M2X
       send_log_to_m2x(LOG_MESSAGE_CONTROLLER_STARTED)
     end
+    
+    def config()
+        return @growth_config
+    end
 
     private
     def check_constants()
-      {GROWTH_CONFIG_FILE: GROWTH_CONFIG_FILE,
-       GROWTH_KEY_FILE: GROWTH_KEY_FILE,
+      {GROWTH_KEY_FILE: GROWTH_KEY_FILE,
        GROWTH_REPOSITORY: GROWTH_REPOSITORY
       }.each(){|label,file|
         if(file==nil or file=="")then

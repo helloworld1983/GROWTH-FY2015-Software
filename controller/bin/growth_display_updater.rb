@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "pry"
+require "growth_controller/config"
 require "growth_controller/console_modules"
 
 class DisplayUpdater
@@ -27,8 +28,8 @@ class DisplayUpdater
     @daq_time_previous = 0
   end
 
-  def update(lines)
-    @disp.display lines
+  def update()
+    @disp.display(construct_message())
   end
 
   def construct_message()
@@ -42,15 +43,15 @@ class DisplayUpdater
     # Line 1 | DAQ Running 150 Hz    | [Status] [Cnt Rate]
     # Line 2 | 5/3/12 580 140 300 mA | [Volt] [Current]
     # Line 3 | 28.7deg 1008hPa 63.1% | [Temp] [Pressure] [Humidity]
-    # Line 4 | WiFi:192.168.0.104    | [LAN/WiFi] [IP Address]
-    # Line 5 | HV: 1000 ON / 1000 ON | [HV Volt/Status]
+    # Line 4 | IP 192.168.0.104    | [LAN/WiFi] [IP Address]
+    # Line 5 | HV 1000V ON  1000V ON | [HV Volt/Status]
     #        + ----------------------+
 
     #---------------------------------------------
     # Line 0
     #---------------------------------------------
     # Detector ID
-    detector_id = growth_config.detector_id()
+    detector_id = @growth_config.detector_id()
     detector_id_latter = detector_id.split("-")[1].upcase().strip()
 
     # Date/time
@@ -74,9 +75,13 @@ class DisplayUpdater
 	    		count_rate = (daq_count_current-@daq_count_previous)/delta_time
 	    	end
     	end
-    	daq_str = "DAQ %7s %3dHz" % [daq_status["daqStatus"], count_rate]
+    	if daq_status["daqStatus"] != nil then
+	    daq_str = "DAQ %7s %4d Hz" % [daq_status["daqStatus"], count_rate]
+	else
+	    daq_str = "DAQ Stopped"
+	end
     rescue => e
-    	daq_str = "DAQ comm error"
+    	daq_str = "DAQ Stopped"
     end
 
     #---------------------------------------------
@@ -96,7 +101,7 @@ class DisplayUpdater
     	# 3.3V current
     	current_3v3 = hk["hk"]["slow_adc"]["4"]["converted_value"]
     	# Construct string
-    	current_str = "%3d %3d %3d" % [current_12v, current_5v, current_3v3]
+    	current_str = "12/5/3 %3d %3d %3d mA" % [current_12v, current_5v, current_3v3]
     rescue => e
     	current_str = "SLOWADC ERROR"
     end
@@ -104,11 +109,12 @@ class DisplayUpdater
     # Temperature/humidity/pressure
     begin
     	bme280_str = "%4.1fdeg %4dhPa %4.1f%%" % [
-	    	hk["hk"]["bme280"]["temperature"],
-	    	hk["hk"]["bme280"]["humidity"],
-	    	hk["hk"]["bme280"]["humidity"]
+	    	hk["hk"]["bme280"]["temperature"]["value"],
+	    	hk["hk"]["bme280"]["pressure"]["value"],
+	    	hk["hk"]["bme280"]["humidity"]["value"]
 		]
     rescue => e
+    	@logger.debug e
     	bme280_str = "BME280 ERROR"
     end
 
@@ -130,27 +136,38 @@ class DisplayUpdater
     #---------------------------------------------
     hv_status_str = ""
     begin
-	    hv_status = @hv.status()
-    	hv_status_str = "%4d %3s %4d %3s" % [
-    		@growth_config.to_hv_voltage(hv_status["0"]["value_in_mV"]),
-    		hv_status["0"]["status"].upcase,
-    		@growth_config.to_hv_voltage(hv_status["0"]["value_in_mV"]),
-			hv_status["1"]["status"].upcase
-    	]
+        hv_status = @hv.status()
+        @logger.debug "HV status #{hv_status}"
+        hv_status_str = "%3dV %s %3dV %s" % [
+            @growth_config.to_hv_voltage(0, hv_status["0"]["value_in_mV"]),
+            hv_status["0"]["status"].upcase,
+            @growth_config.to_hv_voltage(1, hv_status["1"]["value_in_mV"]),
+            hv_status["1"]["status"].upcase
+        ]
     rescue => e
-    	hv_status_str = "ERROR"
+        hv_status_str = "ERROR"
+        @logger.error("HV status error (#{e})")
     end
 
     #---------------------------------------------
     # Construct whole message
     #---------------------------------------------
     str = <<EOS
-    #{detector_id_latter} #{mmdd} #{hhmmss}
-    Obs: Running 105 Hz
-    5/3/12 #{current_str}
-    #{bme280_str}
-    IP #{ip}
-    HV #{hv_status_str}
-    EOS
+#{detector_id_latter} #{mmdd} #{hhmmss}
+#{daq_str}
+#{current_str}
+#{bme280_str}
+IP #{ip}
+HV #{hv_status_str}
+EOS
+    return str
   end
 end
+
+
+display_updater = DisplayUpdater.new()
+while(true)
+  display_updater.update()
+  sleep(5)
+end
+
