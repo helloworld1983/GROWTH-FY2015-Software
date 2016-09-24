@@ -1,4 +1,5 @@
 require "growth_if/slowadc"
+require "growth_if/gpio"
 require "rpi"
 
 module GROWTH
@@ -77,11 +78,20 @@ class ControllerModuleHK < ControllerModule
 				end
 			end
 		end
+
+		# GPIO
+		slide_switch_status = ""
+		if(GPIO.is_slide_switch_on?())then
+			slide_switch_status = "on"
+		else
+			slide_switch_status = "off"
+		end
+
 		# Return result
 		time = Time.now
 		return {
 			status: "ok", unixtime:time.to_i, time:time.strftime("%Y-%m-%dT%H-%M-%S"),
-			hk: {slow_adc:slowadc_result, bme280:bme280_result}
+			hk: {slow_adc:slowadc_result, bme280:bme280_result, slide_switch: slide_switch_status}
 		}
 	end
 end

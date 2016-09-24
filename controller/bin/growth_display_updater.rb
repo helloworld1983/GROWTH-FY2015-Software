@@ -40,7 +40,7 @@ class DisplayUpdater
     #          012345678901234567890
     #        + ----------------------+
     # Line 0 | FY2016A 0604 04:47:38 | [DetID] [Date/time]
-    # Line 1 | DAQ Running 150 Hz    | [Status] [Cnt Rate]
+    # Line 1 | DAQ Running 150 Hz AT | [Status] [Cnt Rate] [Auto run (slide switch)]
     # Line 2 | 5/3/12 580 140 300 mA | [Volt] [Current]
     # Line 3 | 28.7deg 1008hPa 63.1% | [Temp] [Pressure] [Humidity]
     # Line 4 | IP 192.168.0.104    | [LAN/WiFi] [IP Address]
@@ -118,8 +118,10 @@ class DisplayUpdater
     	bme280_str = "BME280 ERROR"
     end
 
-    # Line 2 | 5/3/12 580 140 300 mA | [Volt] [Current]
-    # Line 3 | 28.7deg 1008hPa 63.1% | [Temp] [Pressure] [Humidity]
+    # If the slide switch is ON, show "AT" (automatic run) on Line 1.
+    if(hk["hk"]["slide_switch_status"]=="on")then
+        daq_str += " AT"
+    end
 
     #---------------------------------------------
     # Line 4

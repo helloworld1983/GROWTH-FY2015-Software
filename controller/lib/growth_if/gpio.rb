@@ -77,6 +77,7 @@ module GROWTH
 		# Checks the slide switch status
 		# @return true if on, falsei if off
 		def self.is_slide_switch_on?()
+			@@slide_switch.read()
 			return @@slide_switch.on?()
 		end
 	end

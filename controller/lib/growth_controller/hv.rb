@@ -53,6 +53,7 @@ class ControllerModuleHV < ControllerModule
 		# Parse channel option and value_in_mV option
 		ch = option_json["ch"].to_i
 		value_in_mV = 0
+		value_in_HV_V = 0
 		if(ch<HV_CHANNEL_LOWER or ch>HV_CHANNEL_UPPER)then
 			return {status: "error", message: "Invalid channel index #{ch}"}
 		end
@@ -62,16 +63,24 @@ class ControllerModuleHV < ControllerModule
 		else
 			# FY2016 onwards HV on command
 			if(option_json["value_in_mV"]==nil)then
-				return {status: "error", message: "hv.on command requires DAC output voltage in mV"}
+				return {status: "error", message: "hv.set command requires DAC output voltage in mV"}
 			end
 			# Check value range
 			value_in_mV = option_json["value_in_mV"]
 			if(value_in_mV<HV_VALUE_IN_MILLI_VOLT_LOWER or value_in_mV>HV_VALUE_IN_MILLI_VOLT_UPPER)then
-				return {status: "error", message: "hv.on command received invalid 'voltage in mV' of #{value_in_mV}"}
+				return {status: "error", message: "hv.set command received invalid 'voltage in mV' of #{value_in_mV}"}
+			end
+			if(@growth_config.has_hv_limit and @growth_config.has_hv_conversion)then
+				# Check HV limit in HV Volt
+				value_in_HV_V = @growth_config.to_hv_voltage(ch, value_in_mV)
+				hv_limit_hv_V = @growth_config.get_hv_limit(ch)
+				if (value_in_HV_V==-999 or value_in_HV_V>hv_limit_hv_V) then
+					return {status: "error", message: "hv.set command failed exceeding the limit (#{hv_limit_hv_V})"}
+				end
 			end
 			# Set HV value
 			if(!GROWTH::SlowDAC.set_output(ch, value_in_mV))then
-				return {status: "error", message: "hv.on command failed to set DAC output voltage (SPI error?)"}
+				return {status: "error", message: "hv.set command failed to set DAC output voltage (SPI error?)"}
 			end
 			# Update internal state
 			@hv_value[ch] = value_in_mV.to_f
@@ -79,7 +88,7 @@ class ControllerModuleHV < ControllerModule
 		# Return message
 		return { #
 			status: "ok", message:"hv.set executed", ch:option_json["ch"].to_i, #
-			value_in_mV:@hv_value[ch]}
+			value_in_mV:@hv_value[ch], value_in_HV_V: value_in_HV_V}
 	end
 
 	def on(option_json)
