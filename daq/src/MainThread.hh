@@ -37,6 +37,7 @@ public:
 		this->deviceName = deviceName;
 		this->exposureInSec = exposureInSec;
 		this->configurationFile = configurationFile;
+		this->switchOutputFile = false;
 		setDAQStatus(DAQStatus::Paused);
 	}
 
@@ -44,6 +45,7 @@ public:
 	void run() {
 		using namespace std;
 		setDAQStatus(DAQStatus::Running);
+		switchOutputFile = false;
 		adcBoard = new GROWTH_FY2015_ADC(deviceName);
 
 		fpgaType = adcBoard->getFPGAType();
@@ -128,19 +130,23 @@ public:
 		uint32_t elapsedTime = 0;
 		size_t nReceivedEvents = 0;
 		stopped = false;
-		while (exposureInSec > 0 && elapsedTime < exposureInSec && !stopped) {
+		while (!stopped) {
 			nReceivedEvents = readAndThenSaveEvents();
 			if (nReceivedEvents == 0) {
 				c.wait(eventReadWaitDuration);
 			}
-			//get current UNIX time
+			// Get current UNIX time
 			uint32_t currentUnixTime = CxxUtilities::Time::getUNIXTimeAsUInt32();
-			//read GPS register if necessary
+			// Read GPS register if necessary
 			if (currentUnixTime - unixTimeOfLastGPSRegisterRead > GPSRegisterReadWaitInSec) {
 				readAnsSaveGPSRegister();
 			}
-			//update elapsed time
+			// Update elapsed time
 			elapsedTime = currentUnixTime - startUnixTime;
+			// Check whether specified exposure has been completed
+			if(exposureInSec > 0 && elapsedTime >= exposureInSec){
+				break;
+			}
 		}
 
 #ifdef DRAW_CANVAS
@@ -159,6 +165,8 @@ public:
 		adcBoard->stopAcquisition();
 
 		// Completely read the EventFIFO
+		readAndThenSaveEvents();
+		readAndThenSaveEvents();
 		readAndThenSaveEvents();
 		cout << "Saving event list" << endl;
 
@@ -221,7 +229,7 @@ public:
 	 * A new file is created when the next event(s) is(are) read from the board.
 	 */
 	void startNewOutputFile() {
-		createNewOutputFile = true;
+		switchOutputFile = true;
 	}
 
 private:
@@ -243,7 +251,7 @@ private:
 	}
 
 private:
-	void setDAQStatus(DAQStatus status){
+	void setDAQStatus(DAQStatus status) {
 		daqStatusMutex.lock();
 		daqStatus = status;
 		daqStatusMutex.unlock();
@@ -304,10 +312,10 @@ private:
 		using namespace std;
 
 		// Start recording to a new file is ordered.
-		if (createNewOutputFile) {
+		if (switchOutputFile) {
 			closeOutputEventListFile();
 			openOutputEventListFile();
-			createNewOutputFile = false;
+			switchOutputFile = false;
 		}
 
 		std::vector<GROWTH_FY2015_ADC_Type::Event*> events = adcBoard->getEvent();
@@ -368,7 +376,7 @@ private:
 private:
 	uint32_t startUnixTime;
 	uint32_t startUnixTimeOfCurrentOutputFile;
-	std::string outputFileName;bool createNewOutputFile;
+	std::string outputFileName;bool switchOutputFile;
 	DAQStatus daqStatus;
 	CxxUtilities::Mutex daqStatusMutex;
 };

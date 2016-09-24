@@ -39,6 +39,9 @@ public:
 		int timeout = TimeOutInMilisecond;
 		socket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
 		socket.bind(ss.str().c_str());
+		// Show message
+		using namespace std;
+		cout << "MessageServer has started to accept IPC commands." << endl;
 	}
 
 public:
