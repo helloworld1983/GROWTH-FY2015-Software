@@ -47,7 +47,7 @@ module GROWTH
 
     def to_hv_voltage(ch, dac_voltage_mV)
       if @has_hv_conversion then
-        x = dac_voltage_mV
+        x = dac_voltage_mV.to_f
         if(@hv_conversion[ch]==nil)then
           log_error("growth_config does not define HV conversion equations for channel #{ch}.")
           return -999

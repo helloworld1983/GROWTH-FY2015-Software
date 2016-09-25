@@ -27,7 +27,8 @@ class ConsoleModule < LoggingInterface
 			@requester.rcvtimeo = 1000
 			@requester.sndtimeo = 1000
 		rescue
-			log_fatal("Connection failed. It seems Controller is not running")log_raise "Connection failed"
+			log_fatal("Connection failed. It seems Controller is not running")
+			raise "Connection failed"
 		end
 		log_info("Connected to Controller")
 	end
@@ -41,7 +42,7 @@ class ConsoleModule < LoggingInterface
 			end
 			@requester.send(json_command.to_s)
 		rescue => e
-			log_error("ZerMQ send failed (#{e})")
+			log_error("ZeroMQ send failed (#{e})")
 			@requester.close
 			@requester = nil
 			return {status: "error", message: "ZeroMQ send failed (#{e})"}
@@ -57,7 +58,7 @@ class ConsoleModule < LoggingInterface
 			reply_message = @requester.recv()
 			return JSON.parse(reply_message)
 		rescue => e
-			log_error("ZerMQ receive failed (#{e})")
+			log_error("ZeroMQ receive failed (#{e})")
 			@requester.close
 			@requester = nil
 			return {status: "error", message: "ZeroMQ receive failed (#{e})"}
@@ -69,7 +70,7 @@ end
 
 class ConsoleModuleDetector < ConsoleModule
 	def initialize(name, logger: nil)
-		super(name, logger)
+		super(name, logger: logger)
 	end
 
 	def id()
@@ -91,7 +92,7 @@ end
 
 class ConsoleModuleHV < ConsoleModule
 	def initialize(name, logger: nil)
-		super(name, logger)
+		super(name, logger: logger)
 	end
 
 	def status()
@@ -117,7 +118,7 @@ end
 
 class ConsoleModuleDisplay < ConsoleModule
 	def initialize(name, logger: nil)
-		super(name, logger)
+		super(name, logger: logger)
 	end
 
 	# Clears the display output
@@ -138,7 +139,7 @@ end
 
 class ConsoleModuleHK < ConsoleModule
 	def initialize(name, logger: nil)
-		super(name, logger)
+		super(name, logger: logger)
 	end
 
 	# Clears the display output
@@ -149,7 +150,7 @@ end
 
 class ConsoleModuleDAQ < ConsoleModule
 	def initialize(name, logger: nil)
-		super(name, logger)
+		super(name, logger: logger)
 	end
 
 	def ping()

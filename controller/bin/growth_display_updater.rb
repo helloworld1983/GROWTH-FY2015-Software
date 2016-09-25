@@ -16,11 +16,11 @@ class DisplayUpdater
     	exit(-1)
     end
 
-    @det  = GROWTH::ConsoleModuleDetector.new("det")
-    @hv   = GROWTH::ConsoleModuleHV.new("hv")
-    @disp = GROWTH::ConsoleModuleDisplay.new("disp")
-    @hk   = GROWTH::ConsoleModuleHK.new("hk")
-    @daq  = GROWTH::ConsoleModuleDAQ.new("daq")
+    @det  = GROWTH::ConsoleModuleDetector.new("det", logger: @logger)
+    @hv   = GROWTH::ConsoleModuleHV.new("hv", logger: @logger)
+    @disp = GROWTH::ConsoleModuleDisplay.new("disp", logger: @logger)
+    @hk   = GROWTH::ConsoleModuleHK.new("hk", logger: @logger)
+    @daq  = GROWTH::ConsoleModuleDAQ.new("daq", logger: @logger)
 
     # Variables used to calculate count rate
     @daq_count_previous = 0
@@ -118,7 +118,7 @@ class DisplayUpdater
     end
 
     # If the slide switch is ON, show "AT" (automatic run) on Line 1.
-    if(hk["hk"]["slide_switch_status"]=="on")then
+    if(hk["hk"]["slide_switch"]=="on")then
         daq_str += " AT"
     end
 

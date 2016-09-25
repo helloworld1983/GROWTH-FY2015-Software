@@ -13,7 +13,7 @@ class ControllerModuleHV < ControllerModule
 
 	def initialize(name, logger: nil)
 		super(name, logger: logger)
-		SlowADC.set_logger(logger)
+		SlowDAC.set_logger(logger)
 		GPIO.set_logger(logger)
 
 		@growth_config = GROWTH::Config.new(logger: logger)

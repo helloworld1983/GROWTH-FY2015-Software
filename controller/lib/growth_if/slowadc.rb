@@ -27,6 +27,15 @@ module GROWTH
     CURRENT_VOLTAGE_RAIL = {2=>"12V", 3=> "5V", 4=>"3.3V"}
     SLOWADC_LABEL = {5=>"Slow ADC 5", 6=>"Slow ADC 6", 7=>"Slow ADC 7"}
 
+    # Logger instance used by this class
+    @@logger = Logger.new(STDOUT)
+
+    def self.set_logger(logger)
+      if(logger!=nil)then
+        @@logger = logger
+      end
+    end
+
     # Reads 8ch of MCP3208 and returns a hash containing ADC read result.
     # {
     #   0 => {"raw"=>103, "voltage"=1000, "converted_value"=>1444, "converter_string"=>"Temperature xx degC"},

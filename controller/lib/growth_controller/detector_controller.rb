@@ -30,7 +30,7 @@ module GROWTH
       set_logger(logger, module_name:"controller")
 
       # Load configuration
-      @growth_config = GROWTH::Config.new()
+      @growth_config = GROWTH::Config.new(logger: logger)
       @detector_id = @growth_config.detector_id
 
       # Use M2X telemetry logging?
@@ -55,11 +55,11 @@ module GROWTH
       log_info("Controller started")
 
       # Add controller modules
-      add_controller_module(ControllerModuleDetector.new("det"))
-      add_controller_module(ControllerModuleHV.new("hv"))
-      add_controller_module(ControllerModuleDisplay.new("disp", @context))
-      add_controller_module(ControllerModuleHK.new("hk"))
-      add_controller_module(ControllerModuleDAQ.new("daq", @context))
+      add_controller_module(ControllerModuleDetector.new("det", logger: logger))
+      add_controller_module(ControllerModuleHV.new("hv", logger: logger))
+      add_controller_module(ControllerModuleDisplay.new("disp", @context, logger: logger))
+      add_controller_module(ControllerModuleHK.new("hk", logger: logger))
+      add_controller_module(ControllerModuleDAQ.new("daq", @context, logger: logger))
 
       # Send a log message to M2X
       send_log_to_m2x(LOG_MESSAGE_CONTROLLER_STARTED)

@@ -22,11 +22,18 @@ module GROWTH
 		end
 		
 		# Set log level
-		log_level = option_hash["log-level"]
-		if ["debug","info","warn","error","fatal"].count(log_level)==0 then
+		levels = {
+		    "debug" => Logger::DEBUG, 
+		    "info" => Logger::INFO,
+		    "warn" => Logger::WARN,
+		    "error" => Logger::ERROR,
+		    "fatal" => Logger::FATAL
+		    }
+		if levels[option_hash["log-level"]]==nil then
 			STDERR.puts "Error: Invalid --log-level #{log_level} (should be either of debug, info, warn, error, fatal)"
 			exit(-1)
 		end
+		log_level = levels[option_hash["log-level"]]
 
 		# Set log destination (stdout or file)
 		log_destinaiton=STDOUT
@@ -57,6 +64,8 @@ module GROWTH
 			logger = Logger.new(log_destinaiton, "daily")
 		end
 		logger.level = log_level
+		logger.progname = program_name
+		
 		return logger
 	end
 
