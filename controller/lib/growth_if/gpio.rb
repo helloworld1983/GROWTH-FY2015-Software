@@ -61,7 +61,7 @@ module GROWTH
 
 			# Set HV output status
 			if(status==:on)then
-				@@log.warn("[GPIO] HK Ch.#{ch} ON")
+				@@logger.warn("[GPIO] HK Ch.#{ch} ON")
 				@@hv[ch].on
 			elsif(status==:off)then
 				@@logger.warn("[GPIO] HK Ch.#{ch} OFF")

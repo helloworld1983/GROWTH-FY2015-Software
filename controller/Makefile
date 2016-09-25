@@ -12,3 +12,4 @@ $(GOD_CONFIG_FILE): god/growth.god.conf
 
 $(INIT_SCRIPT_FILE): god/growth_god
 	install -D -m 755 $^ $@
+	update-rc.d growth_god defaults

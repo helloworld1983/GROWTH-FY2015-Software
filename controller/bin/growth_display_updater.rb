@@ -85,7 +85,7 @@ class DisplayUpdater
 	    	end
     	end
     	if daq_status["daqStatus"] != nil then
-	    daq_str = "DAQ %7s %4d Hz" % [daq_status["daqStatus"], count_rate]
+	    daq_str = "DAQ %7s %3d Hz" % [daq_status["daqStatus"], count_rate]
 	else
 	    daq_str = "DAQ Stopped"
 	end

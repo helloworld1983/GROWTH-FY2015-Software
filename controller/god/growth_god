@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
-. /etc/rc.d/init.d/functions
-
-RBENV_ROOT=/opt/rbenv
-RBENV_VERSION=""
-export RBENV_VERSION
+### BEGIN INIT INFO
+# Provides:          growth_god
+# Required-Start:
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: growth_god
+### END INIT INFO
 
 RUBY_PATH=/usr/local/bin/ruby
 GOD=/usr/local/bin/god
@@ -20,8 +23,8 @@ god_start() {
   RETVAL=$?
   if [ "$RETVAL" == '0' ]; then
     sleep 2
-    if [ -d $CONFIG_FILE_DIR ]; then
-      $GOD load 
+    if [ -f ${GOD_CONFIG_FILE} ]; then
+      $GOD load ${GOD_CONFIG_FILE}
     fi
   fi
 

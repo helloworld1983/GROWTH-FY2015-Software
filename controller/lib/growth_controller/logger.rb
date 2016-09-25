@@ -122,11 +122,11 @@ module GROWTH
 			end
 		end
 
-		def log_error(str)
+		def log_fatal(str)
 			if(@module_name!="")then
-				@logger.error("[#{@module_name}] "+str)
+				@logger.fatal("[#{@module_name}] "+str)
 			else
-				@logger.error(str)
+				@logger.fatal(str)
 			end
 		end
 
