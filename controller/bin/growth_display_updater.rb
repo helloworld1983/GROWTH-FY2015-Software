@@ -61,6 +61,16 @@ class DisplayUpdater
     #---------------------------------------------
     # Line 1
     #---------------------------------------------
+    ip = ""
+    begin
+    	ip=@det.ip()["ip"]
+    rescue => e
+    	ip="N/A"
+    end
+
+    #---------------------------------------------
+    # Line 2
+    #---------------------------------------------
     # Observation status
     daq_str = ""
     begin
@@ -84,7 +94,7 @@ class DisplayUpdater
     end
 
     #---------------------------------------------
-    # Line 2/3
+    # Line 3/4
     #---------------------------------------------
     current_str = ""
     bme280_str = ""
@@ -101,6 +111,12 @@ class DisplayUpdater
     	current_3v3 = hk["hk"]["slow_adc"]["4"]["converted_value"]
     	# Construct string
     	current_str = "12/5/3 %3d %3d %3d mA" % [current_12v, current_5v, current_3v3]
+
+        # If the slide switch is ON, show "AT" (automatic run) on Line 1.
+		if(hk["hk"]["slide_switch"]=="on")then
+			daq_str += " AT"
+		end
+
     rescue => e
     	current_str = "SLOWADC ERROR"
     end
@@ -115,21 +131,6 @@ class DisplayUpdater
     rescue => e
     	@logger.debug e
     	bme280_str = "BME280 ERROR"
-    end
-
-    # If the slide switch is ON, show "AT" (automatic run) on Line 1.
-    if(hk["hk"]["slide_switch"]=="on")then
-        daq_str += " AT"
-    end
-
-    #---------------------------------------------
-    # Line 4
-    #---------------------------------------------
-    ip = ""
-    begin
-    	ip=@det.ip()["ip"]
-    rescue => e
-    	ip="ERROR"
     end
 
     #---------------------------------------------
@@ -155,10 +156,10 @@ class DisplayUpdater
     #---------------------------------------------
     str = <<EOS
 #{detector_id_latter} #{mmdd} #{hhmmss}
+IP #{ip}
 #{daq_str}
 #{current_str}
 #{bme280_str}
-IP #{ip}
 HV #{hv_status_str}
 EOS
     return str

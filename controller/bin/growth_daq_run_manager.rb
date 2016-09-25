@@ -13,7 +13,7 @@ class DAQRunManager
   HK_CHECK_PERIOD_SEC = 30
   
   def initialize()
-    @logger = GROWTH.logger(ARGV, "DAQRunManager")
+    @logger = GROWTH.logger(ARGV, "growth_daq_run_manager")
     @growth_config = GROWTH::Config.new(logger: @logger)
     # Check if temperature limits are defined in growth_config.yaml
     if(!@growth_config.has_temperature_limit)then
@@ -21,9 +21,9 @@ class DAQRunManager
       exit(-1)
     end
 
-    @hv = GROWTH::ConsoleModuleHV.new("hv")  
-    @hk = GROWTH::ConsoleModuleHK.new("hk")
-    @daq = GROWTH::ConsoleModuleDAQ.new("daq")
+    @hv = GROWTH::ConsoleModuleHV.new("hv", logger: @logger)  
+    @hk = GROWTH::ConsoleModuleHK.new("hk", logger: @logger)
+    @daq = GROWTH::ConsoleModuleDAQ.new("daq", logger: @logger)
     
     @daq_run_can_be_started = false
     @time_since_last_hk_check = 999

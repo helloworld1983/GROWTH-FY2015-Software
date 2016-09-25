@@ -13,6 +13,8 @@ class ControllerModuleHK < ControllerModule
 		super(name, logger: logger)
 		SlowADC.set_logger(logger)
 		GPIO.set_logger(logger)
+		#~ GPIO.set_led(0, :off)
+		#~ GPIO.set_led(1, :off)
 		
 		define_command("read")
 		
