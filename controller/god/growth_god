@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+. /etc/rc.d/init.d/functions
+
+RBENV_ROOT=/opt/rbenv
+RBENV_VERSION=""
+export RBENV_VERSION
+
+RUBY_PATH=/usr/local/bin/ruby
+GOD=/usr/local/bin/god
+LOG_FILE=/var/log/god.log
+GOD_CONFIG_FILE=/etc/god/growth.god.conf
+
+test -x $GOD || exit 0
+
+RETVAL=0
+
+god_start() {
+  $GOD -l $LOG_FILE || echo -en "god is already started"
+  RETVAL=$?
+  if [ "$RETVAL" == '0' ]; then
+    sleep 2
+    if [ -d $CONFIG_FILE_DIR ]; then
+      $GOD load 
+    fi
+  fi
+
+  return $RETVAL
+}
+
+god_stop() {
+  stop_cmd="$GOD terminate"
+  $stop_cmd || echo -en "god has not been started"
+}
+
+case "$1" in
+  start)
+    god_start
+    RETVAL=$?
+    ;;
+  stop)
+    god_stop
+    RETVAL=$?
+    ;;
+  restart)
+    god_stop
+    god_start
+    RETVAL=$?
+    ;;
+  status)
+    $GOD status
+    RETVAL=$?
+    ;;
+  *)
+    echo "Usage: god {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit $RETVAL
