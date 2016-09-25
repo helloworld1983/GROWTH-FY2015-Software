@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require "growth_controller/logger"
 require "growth_controller/console_modules"
 
 # This script starts/pauses/resumes DAQ program (i.e. observation of gamma-ray
@@ -80,16 +81,17 @@ class DAQRunManager
 
   WAIT_DURATION_SEC = 15
 
-  def initialize(logger, growth_config)
-    @logger = logger
-    @growth_config = growth_config
+  def initialize()
+    # Construct logger
+    @logger = GROWTH.logger(ARGV, "growth_daq_run_manager")
+    @logger.info("Starting...")
+
+    # Load growth_config.yaml
+    @growth_config = GROWTH::Config.new(logger: @logger)
+
+    # Instantiate subsystems
     @hv   = GROWTH::ConsoleModuleHV.new("hv")  
     @daq  = GROWTH::ConsoleModuleDAQ.new("daq")
-    
-    @hk_check_thread = Thread.new() do
-      @hk_checker = HKChecker.new(logger, growth_config)
-      @hk_checker.run()
-    end
   end
 
   attr_accessor :stopped
@@ -145,14 +147,7 @@ class DAQRunManager
     @hk_checker.stopped = true
     @hk_check_thread.join()
   end
-
 end
 
-@logger = Logger.new(STDOUT)
-@logger.progname = "growth_daq_run_manager"
-
-@logger.info("Starting...")
-@growth_config = GROWTH::Config.new()
-
-daq_run_manager = DAQRunManager.new(@logger, @growth_config)
+daq_run_manager = DAQRunManager.new()
 daq_run_manager.run()

@@ -2,6 +2,7 @@ require "rbczmq"
 require "json"
 require "yaml"
 require "socket"
+require "growth_controller/controller_module"
 
 module GROWTH
 
@@ -9,31 +10,27 @@ class ControllerModuleDisplay < ControllerModule
 	# TCP port number of display server
 	DisplayServerPortNumber = 10010
 
-	def initialize(name, zmq_context)
-		super(name)
+	def initialize(name, zmq_context, logger: nil)
+		super(name, logger: logger)
 		define_command("clear")
 		define_command("display")
 		define_command("connected")
 
 		@context = zmq_context
-		
-		@logger = Logger.new(STDOUT)
-		@logger.progname = "ControllerModuleDisplay"
-
 		connect()
 	end
 
 	private
 	def connect()
-		@logger.info("Connecting to display server...")
+		log_info("Connecting to display server...")
 		@requester = @context.socket(ZMQ::REQ)
 		begin
 			@requester.connect("tcp://localhost:#{DisplayServerPortNumber}")
 			@requester.rcvtimeo = 1000
 			@requester.sndtimeo = 1000
-			@logger.info("Connected to display server")
+			log_info("Connected to display server")
 		rescue
-			@logger.error("Connection failed. It seems Controller is not running")
+			log_error("Connection failed. It seems Controller is not running")
 			@requester = nil
 		end
 	end
@@ -45,7 +42,7 @@ class ControllerModuleDisplay < ControllerModule
 			connect()
 		end
 		if(@requester==nil)then
-			@logger.warn("Continue with being disconnected from display server")
+			log_warn("Continue with being disconnected from display server")
 			return {status: "error", message: "Could not connect to display server"}
 		end
 		begin
@@ -53,7 +50,7 @@ class ControllerModuleDisplay < ControllerModule
 		rescue => e
 			@requester.close
 			@requester = nil
-			@logger.warn("send_command() returning error (#{e})")
+			log_warn("send_command() returning error (#{e})")
 			return {status: "error", message: "ZeroMQ send failed (#{e})"}
 		end
 		return receive_reply()
@@ -63,12 +60,12 @@ class ControllerModuleDisplay < ControllerModule
 	def receive_reply()
 		begin
 			reply_message = @requester.recv()
-			@logger.debug(reply_message)
+			log_debug(reply_message)
 			return JSON.parse(reply_message)
 		rescue => e
 			@requester.close
 			@requester = nil
-			@logger.warn("receive_reply() returning error (#{e})")
+			log_warn("receive_reply() returning error (#{e})")
 			return {status: "error", message: "ZeroMQ receive failed (#{e})"}
 		end		
 	end
@@ -78,14 +75,14 @@ class ControllerModuleDisplay < ControllerModule
 	#---------------------------------------------
 	# Clears display
 	def clear(option_json)
-		@logger.debug("clear command invoked")
+		log_debug("clear command invoked")
 		return send_command({command: "clear"})
 	end
 
 	# Displays string
 	# option_json should contain "message" entry.
 	def display(option_json)
-		@logger.debug("display command invoked")
+		log_debug("display command invoked")
 		return send_command({command: "display", option:option_json})
 	end
 

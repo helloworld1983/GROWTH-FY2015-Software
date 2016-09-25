@@ -14,6 +14,12 @@ module GROWTH
 		# Logger instance
 		@@logger = Logger.new(STDOUT)
 
+		def self.set_logger(logger)
+			if(logger!=nil)then
+				@@logger = logger
+			end
+		end
+
 		# Sets LED status.
 		# @param ch 0 or 1
 		# @param status :on or :off
@@ -21,7 +27,7 @@ module GROWTH
 		def self.set_led(ch, status=:on)
 			# Check channel
 			if(ch<0 or ch>1)then
-				@@logger.error("GPIO invalid LED channel (0 or 1; #{ch} provided)")
+				@@logger.error("[GPIO] invalid LED channel (0 or 1; #{ch} provided)")
 				return false
 			end
 
@@ -31,7 +37,7 @@ module GROWTH
 			elsif(status==:off)then
 				@@led[ch].off
 			else
-				@@logger.error("GPIO invalid LED status (:on or :off; #{status} provided)")
+				@@logger.error("[GPIO] invalid LED status (:on or :off; #{status} provided)")
 				return false
 			end
 
@@ -45,7 +51,7 @@ module GROWTH
 		def self.set_hv(ch, status=:on)
 			# Check channel
 			if(ch<0 or ch>1)then
-				@@logger.error("GPIO invalid HV channel (0 or 1; #{ch} provided)")
+				@@logger.error("[GPIO] invalid HV channel (0 or 1; #{ch} provided)")
 				return false
 			end
 
@@ -55,7 +61,7 @@ module GROWTH
 			elsif(status==:off)then
 				@@hv[ch].off
 			else
-				@@logger.error("GPIO invalid HV status (:on or :off; #{status} provided)")
+				@@logger.error("[GPIO] invalid HV status (:on or :off; #{status} provided)")
 				return false
 			end
 
@@ -68,7 +74,7 @@ module GROWTH
 		def self.is_hv_on?(ch=0)
 			# Check channel
 			if(ch<0 or ch>1)then
-				@@logger.error("GPIO invalid HV channel (0 or 1; #{ch} provided)")
+				@@logger.error("[GPIO] invalid HV channel (0 or 1; #{ch} provided)")
 				return false
 			end
 			return @@hv[ch].on?

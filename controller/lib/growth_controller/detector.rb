@@ -5,8 +5,8 @@ module GROWTH
 
 class ControllerModuleDetector < ControllerModule
 	
-	def initialize(name)
-		super(name)
+	def initialize(name, logger: nil)
+		super(name, logger: logger)
 		define_command("id")
 		define_command("ip")
 		define_command("hash")

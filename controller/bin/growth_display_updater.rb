@@ -2,16 +2,15 @@
 
 require "pry"
 require "growth_controller/config"
+require "growth_controller/logger"
 require "growth_controller/console_modules"
 
 class DisplayUpdater
   def initialize()
-    @logger = Logger.new(STDOUT)
-    @logger.progname = "growth_display_updater"
-
+    @logger = GROWTH.logger(ARGV, "growth_display_updater")
     @logger.info("Initializing the display updater...")
 
-    @growth_config = GROWTH::Config.new()
+    @growth_config = GROWTH::Config.new(logger: @logger)
     if(!@growth_config.has_hv_conversion())then
     	@logger.fatal("growth_config should contain HV conversion equation. See the user manual.")
     	exit(-1)

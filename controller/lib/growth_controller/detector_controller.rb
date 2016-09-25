@@ -4,6 +4,7 @@ require "yaml"
 require "socket"
 require "logger"
 
+require "growth_controller/logger"
 require "growth_controller/config"
 require "growth_controller/controller_module"
 require "growth_controller/detector"
@@ -19,14 +20,15 @@ module GROWTH
   GROWTH_REPOSITORY  = ENV["GROWTH_REPOSITORY"]
 
   class DetectorController
+    include LoggingInterface
+
     DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER   = 10000
     LOG_MESSAGE_CONTROLLER_STARTED = "controller daemon started"
     LOG_MESSAGE_CONTROLLER_STOPPED = "controller daemon stopped"
 
     # Constructs an instance, and then start ZeroMQ server
-    def initialize()
-      @logger = Logger.new(STDOUT)
-      @logger.progname = "DetectorController"
+    def initialize(logger: nil)
+      set_logger(logger, module_name:"controller")
 
       # Load configuration
       @growth_config = GROWTH::Config.new()
@@ -51,7 +53,7 @@ module GROWTH
       @context = ZMQ::Context.new
       @socket  = @context.socket(ZMQ::REP)
       @socket.bind("tcp://*:#{DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER}")
-      @logger.info "Controller started"
+      log_info("Controller started")
 
       # Add controller modules
       add_controller_module(ControllerModuleDetector.new("det"))
@@ -74,11 +76,11 @@ module GROWTH
        GROWTH_REPOSITORY: GROWTH_REPOSITORY
       }.each(){|label,file|
         if(file==nil or file=="")then
-          @logger.fatal("#{label} environment variable not set")
+          log_fatal("#{label} environment variable not set")
           exit(-1)
         end
         if(!File.exists?(file))then
-          @logger.fatal("#{label} #{file} not found")
+          log_fatal("#{label} #{file} not found")
           exit(-1)
         end
       }
@@ -91,8 +93,8 @@ module GROWTH
       @primary_api_key = nil
       # Get M2X keys
       if(GROWTH_KEY_FILE=="" or !File.exist?(GROWTH_KEY_FILE))then
-        @logger.warn "M2X key file not found. Check if GROWTH_KEY_FILE environment variable is set."
-        @logger.warn "M2X telemetry recording will be stopped."
+        log_warn "M2X key file not found. Check if GROWTH_KEY_FILE environment variable is set."
+        log_warn "M2X telemetry recording will be stopped."
         @use_m2x = false
         return
       end
@@ -121,7 +123,7 @@ module GROWTH
         subsystem = command.split(".")[0]
         command = command.split(".")[1]
       end
-      @logger.info "Subsystem: #{subsystem} Command: #{command} Option: #{option}"
+      log_info "Subsystem: #{subsystem} Command: #{command} Option: #{option}"
 
       # Controller commands
       if(subsystem=="controller" and command=="stop")then
@@ -135,8 +137,8 @@ module GROWTH
         if(controller_module.has_command(command))then
           reply = controller_module.send(command, option)
           if (reply==nil or !reply.instance_of?(Hash)) then
-			@logger.warn("Subsystem '#{subsystem}' returned invalid return value (not Hash)")
-			@logger.warn("Returned value = #{reply}")
+			log_warn("Subsystem '#{subsystem}' returned invalid return value (not Hash)")
+			log_warn("Returned value = #{reply}")
 			reply = {}
           end
           reply["subsystem"] = subsystem
@@ -163,8 +165,8 @@ module GROWTH
       while(!@stopped)
         # Wait for a JSON message from a client
         message = @socket.recv()
-        #@logger.info "Receive status: #{status} (#{ZMQ::Util.error_string}) message: #{message.inspect}"
-        @logger.info "Receive status: message: #{message.inspect}"
+        #log_info "Receive status: #{status} (#{ZMQ::Util.error_string}) message: #{message.inspect}"
+        log_info "Receive status: message: #{message.inspect}"
 
         # Process JSON commands
         replyMessage = "{}"
@@ -174,7 +176,7 @@ module GROWTH
         @socket.send(replyMessage)
       end
       # Finalize
-      @logger.info "Controller stopped"
+      log_info "Controller stopped"
     end
 
     # Send log to M2X
@@ -186,16 +188,16 @@ module GROWTH
       stream_id = "detector-status"
       url = "http://api-m2x.att.com/v2/devices/#{@device_id}/streams/#{stream_id}/value"
       json = { value: str }.to_json
-      @logger.info "URL = #{url}"
-      @logger.info "json = #{json}"
-      @logger.info `curl -i -X PUT #{url} -H "X-M2X-KEY: #{@primary_api_key}" -H "Content-Type: application/json" -d "#{json.gsub('"','\"')}"`
+      log_debug "URL = #{url}"
+      log_debug "json = #{json}"
+      log_debug `curl -i -X PUT #{url} -H "X-M2X-KEY: #{@primary_api_key}" -H "Content-Type: application/json" -d "#{json.gsub('"','\"')}"`
     end
 
     # Add ControllerModule instance
     def add_controller_module(controller_module)
       controller_module.controller = self
       @controller_modules[controller_module.name] = controller_module
-      @logger.info "ControllerModule #{controller_module.name} added"
+      log_info "ControllerModule #{controller_module.name} added"
     end
 
     # Getter/setter

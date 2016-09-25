@@ -2,6 +2,8 @@ require "rbczmq"
 require "json"
 require "yaml"
 require "socket"
+require "growth_controller/logger"
+require "growth_controller/controller_module"
 
 module GROWTH
 
@@ -9,8 +11,8 @@ class ControllerModuleDAQ < ControllerModule
 	# TCP port number of growth_daq ZeroMQ server
 	DAQ_ZMQ_PORT_NUMBER = 10020
 
-	def initialize(name, zmq_context)
-		super(name)
+	def initialize(name, zmq_context, logger: nil)
+		super(name, logger: logger)
 		define_command("ping")
 		define_command("stop")
 		define_command("pause")
@@ -19,24 +21,20 @@ class ControllerModuleDAQ < ControllerModule
 		define_command("switch_output")
 
 		@context = zmq_context
-
-		@logger = Logger.new(STDOUT)
-		@logger.progname = "ControllerModuleDAQ"
-
 		connect()
 	end
 
 	private
 	def connect()
-		@logger.info("Connecting to DAQ ZeroMQ server...")
+		log_info("Connecting to DAQ ZeroMQ server...")
 		@requester = @context.socket(ZMQ::REQ)
 		begin
 			@requester.connect("tcp://localhost:#{DAQ_ZMQ_PORT_NUMBER}")
 			@requester.rcvtimeo = 1000
 			@requester.sndtimeo = 1000
-			@logger.info("Connected to DAQ ZeroMQ server")
+			log_info("Connected to DAQ ZeroMQ server")
 		rescue
-			@logger.error("Connection failed. It seems the DAQ program is not running")
+			log_error("Connection failed. It seems the DAQ program is not running")
 			@requester = nil
 		end
 	end
@@ -55,7 +53,7 @@ class ControllerModuleDAQ < ControllerModule
 		rescue => e
 			@requester.close
 			@requester = nil
-			@logger.warn("send_command() returning error (#{e})")
+			log_warn("send_command() returning error (#{e})")
 			return {status: "error", message: "ZeroMQ send failed (#{e})"}
 		end
 		return receive_reply()
@@ -69,7 +67,7 @@ class ControllerModuleDAQ < ControllerModule
 		rescue => e
 			@requester.close
 			@requester = nil
-			@logger.warn("receive_reply() returning error (#{e})")
+			log_warn("receive_reply() returning error (#{e})")
 			return {status: "error", message: "ZeroMQ communication failed (#{e}"}
 		end		
 	end
@@ -78,32 +76,32 @@ class ControllerModuleDAQ < ControllerModule
 	# Implemented commands
 	#---------------------------------------------
 	def ping(option_json)
-		@logger.debug("ping command invoked")
+		log_debug("ping command invoked")
 		return send_command({command: "ping"})
 	end
 
 	def stop(option_json)
-		@logger.debug("stop command invoked")
+		log_debug("stop command invoked")
 		return send_command({command: "stop"})
 	end
 
 	def pause(option_json)
-		@logger.debug("pause command invoked")
+		log_debug("pause command invoked")
 		return send_command({command: "pause"})
 	end
 
 	def resume(option_json)
-		@logger.debug("resume command invoked")
+		log_debug("resume command invoked")
 		return send_command({command: "resume"})
 	end
 
 	def status(optionJSON)
-		@logger.debug("status command invoked")
+		log_debug("status command invoked")
 		return send_command({command: "getStatus"})
 	end
 
 	def switch_output(option_json)
-		@logger.debug("switch_output command invoked")
+		log_debug("switch_output command invoked")
 		return send_command({command: "startNewOutputFile"})
 	end
 

@@ -11,9 +11,12 @@ class ControllerModuleHV < ControllerModule
 	HV_VALUE_IN_MILLI_VOLT_LOWER = 0
 	HV_VALUE_IN_MILLI_VOLT_UPPER = 3300
 
-	def initialize(name)
-		super(name)
-		@growth_config = GROWTH::Config.new()
+	def initialize(name, logger: nil)
+		super(name, logger: logger)
+		SlowADC.set_logger(logger)
+		GPIO.set_logger(logger)
+
+		@growth_config = GROWTH::Config.new(logger: logger)
 		define_command("status")
 		define_command("set")
 		define_command("on")

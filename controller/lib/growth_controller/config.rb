@@ -1,13 +1,15 @@
 require "yaml"
 require "logger"
+require "growth_controller/logger"
 
 module GROWTH
   class Config
+    include LoggingInterface
 
     DEFAULT_DAQ_EXPOSURE_SEC = 1800
     DEFAULT_HK_SAMPLING_PERIOD = 120
 
-    def initialize()
+    def initialize(logger: nil)
       @growth_config_file = ""
       # Set config file path
       if(ENV["GROWTH_CONFIG_FILE"]!=nil and File.exists?(ENV["GROWTH_CONFIG_FILE"]))then
@@ -19,9 +21,9 @@ module GROWTH
       end
 
       # Construct a logger instance
-      @logger = Logger.new(STDOUT)
-      @logger.progname = "GROWTH::Config"
-      @logger.info("growth_config = #{@growth_config_file}")
+      set_logger(logger, module_name: "config")
+      
+      log_info("growth_config = #{@growth_config_file}")
 
       # Set default values
       @autorun_daq_exposure_sec = DEFAULT_DAQ_EXPOSURE_SEC
@@ -47,13 +49,13 @@ module GROWTH
       if @has_hv_conversion then
         x = dac_voltage_mV
         if(@hv_conversion[ch]==nil)then
-          @logger.error("growth_config does not define HV conversion equations for channel #{ch}.")
+          log_error("growth_config does not define HV conversion equations for channel #{ch}.")
           return -999
         else
           return eval(@hv_conversion[ch])
         end
       else
-        @logger.error("growth_config does not define conversion equations for HV DAC.")
+        log_error("growth_config does not define conversion equations for HV DAC.")
         return 0
       end
     end
@@ -61,13 +63,13 @@ module GROWTH
     def get_detault_hv_DAC_mV(ch)
       if @has_hv_default then
         if(@hv_default_DAC_mV[ch]==nil)then
-          @logger.error("growth_config does not define deault HV DAC value for #{ch}.")
+          log_error("growth_config does not define deault HV DAC value for #{ch}.")
           return 0
         else
           return @hv_default_DAC_mV[ch]
         end
       else
-        @logger.error("growth_config does not define default HV DAC values.")
+        log_error("growth_config does not define default HV DAC values.")
         return 0
       end
     end
@@ -76,7 +78,7 @@ module GROWTH
       if(@has_temperature_limit)then
         return (@limits_temperature["lower"]<=temperature_degC and temperature_degC<=@limits_temperature["upper"])
       else
-        @logger.warn("Temperature limit not defined.")
+        log_warn("Temperature limit not defined.")
         return true
       end
     end
@@ -88,7 +90,7 @@ module GROWTH
     def get_hv_limit(ch)
       if(@has_hv_limit)then
         if(@limit_hv[ch]==nil)then
-          @logger.warn("HV limit not defined for Ch.#{ch}.")
+          log_warn("HV limit not defined for Ch.#{ch}.")
           return 0
         end
         return @limit_hv[ch]
@@ -101,21 +103,21 @@ module GROWTH
     def load_config_file()
       # Check file presence
       if(!File.exist?(@growth_config_file))then
-        @logger.error "#{@growth_config_file} not found"
+        log_error "#{@growth_config_file} not found"
         exit(-1)
       end
 
       # Load YAML configuration file
-      @logger.info "Loading #{@growth_config_file}"
+      log_info "Loading #{@growth_config_file}"
       yaml = YAML.load_file(@growth_config_file)
 
       # Detector ID
       if(yaml["detectorID"]==nil or yaml["detectorID"]=="")then
-        @logger.error "detectorID not found in #{@growth_config_file}"
+        log_error "detectorID not found in #{@growth_config_file}"
         exit(-1)
       else
         @detector_id = yaml["detectorID"]
-        @logger.info "detectorID: #{@detector_id}"
+        log_info "detectorID: #{@detector_id}"
       end
 
       # HV-related configuration
@@ -137,10 +139,10 @@ module GROWTH
             # equation should use x or DAC_mV as variable that represents DAC output
             # voltage in mV, for example "x/3300 * 1000" or "DAC_mV/3300 * 1000".
             @hv_conversion[ch.to_i] = equation
-            @logger.info("HV Ch.#{ch} HV_V = #{equation.downcase.gsub("dac_mv","x")}")
+            log_info("HV Ch.#{ch} HV_V = #{equation.downcase.gsub("dac_mv","x")}")
           end
         else
-          @logger.warn("No HV conversion equation defined")
+          log_warn("No HV conversion equation defined")
           @has_hv_conversion = false
         end
 
@@ -151,15 +153,15 @@ module GROWTH
           @has_hv_default = true
           for ch,default_DAC_mV in yaml["hv"]["default"]
             @hv_default_DAC_mV[ch.to_i] = default_DAC_mV.to_i
-            @logger.info("HV Ch.#{ch} DAC_mV = #{default_DAC_mV.to_i}")
+            log_info("HV Ch.#{ch} DAC_mV = #{default_DAC_mV.to_i}")
           end
         else
-          @logger.warn("No HV default value defined")
+          log_warn("No HV default value defined")
           @has_hv_default = false
         end
 
       else
-        @logger.error("No HV configuration")
+        log_error("No HV configuration")
         exit(-1)
       end
     end
@@ -178,7 +180,7 @@ module GROWTH
             if(threshold_type=="upper" or threshold_type=="lower")then
               temperature_degC = value
               @limits_temperature[threshold_type] = temperature_degC
-              @logger.info("Temprature limit #{threshold_type} = #{temperature_degC} degC")
+              log_info("Temprature limit #{threshold_type} = #{temperature_degC} degC")
               @has_temperature_limit = true
             elsif(threshold_type=="source")then
               # Select temperature limit source. Possible sources are:
@@ -187,10 +189,10 @@ module GROWTH
               if(value=="temperature-pcb" or value=="bme280")then
                 @limits_temperature["source"] = value
               else
-                @logger.error("Invalid temperature source #{threshold_type} was specified.")
+                log_error("Invalid temperature source #{threshold_type} was specified.")
               end
             else
-              @logger.error("Invalid limit key #{threshold_type} was specified (supported = upper/lower/source)")
+              log_error("Invalid limit key #{threshold_type} was specified (supported = upper/lower/source)")
               @has_temperature_limit = false
             end
           end
@@ -201,11 +203,11 @@ module GROWTH
           @has_hv_limit = true
           for ch, value_V in yaml["limits"]["hv"]
             @limit_hv[ch.to_i] = value_V
-            @logger.info("HV limit Ch.#{ch} = #{value_V} V")
+            log_info("HV limit Ch.#{ch} = #{value_V} V")
           end
         end
       else
-        @logger.warn("No limit defined in growth_config.yaml")
+        log_warn("No limit defined in growth_config.yaml")
       end
     end
 
@@ -215,17 +217,17 @@ module GROWTH
         # DAQ-related configuration
         if(yaml["autorun"]["daq"]!=nil)then
           @autorun_daq_exposure_sec = yaml["autorun"]["daq"]["exposure_sec"]
-          @logger.info("DAQ autorun observation exposure #{@autorun_daq_exposure_sec} sec.")
+          log_info("DAQ autorun observation exposure #{@autorun_daq_exposure_sec} sec.")
         end
 
         # HK-related configuration
         if(yaml["autorun"]["hk"]!=nil)then
           @autorun_hk_sampling_period_sec = yaml["autorun"]["hk"]["sampling_period_sec"]
-          @logger.info("HK autorun observation sampling perioid #{@autorun_hk_sampling_period_sec} sec.")
+          log_info("HK autorun observation sampling perioid #{@autorun_hk_sampling_period_sec} sec.")
         end
 
       else
-        @logger.warn("No autorun configuration defined.")
+        log_warn("No autorun configuration defined.")
       end
     end
   end

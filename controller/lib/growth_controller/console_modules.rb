@@ -1,6 +1,6 @@
 require "rbczmq"
 require "json"
-require "logger"
+require "growth_controller/logger"
 
 DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER   = 10000
 
@@ -10,41 +10,40 @@ module GROWTH
 # ConsoleModules
 #---------------------------------------------
 class ConsoleModule
-	
+	include LoggingInterface
+
 	@@context = ZMQ::Context.new
 
-	def initialize(name)
-		@logger = Logger.new(STDOUT)
-		@logger.progname = "ConsoleModule"
+	def initialize(name, logger: nil)
+		set_logger(logger, module_name: name)
 		@requester = nil
 		@name = name
 	end
 
 	def connect()
 		# Open ZeroMQ client connection
-		@logger.info("Connecting to Controller...")
+		log_info("Connecting to Controller...")
 		@requester = @@context.socket(ZMQ::REQ)
 		begin
 			@requester.connect("tcp://localhost:#{DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER}")
 			@requester.rcvtimeo = 1000
 			@requester.sndtimeo = 1000
 		rescue
-			@logger.fatal("connection failed. It seems Controller is not running")
-			raise "Connection failed"
+			log_fatal("Connection failed. It seems Controller is not running")log_raise "Connection failed"
 		end
-		@logger.info("Connected to Controller")
+		log_info("Connected to Controller")
 	end
 
 	def send_command(command, option_hash={})
 		json_command = {command: name+"."+command, option: option_hash}.to_json
-		@logger.info("Sending command: #{json_command}")
+		log_info("Sending command: #{json_command}")
 		begin
 			if(@requester==nil)then
 				connect()
 			end
 			@requester.send(json_command.to_s)
 		rescue => e
-			@logger.error("ZerMQ send failed (#{e})")
+			log_error("ZerMQ send failed (#{e})")
 			@requester.close
 			@requester = nil
 			return {status: "error", message: "ZeroMQ send failed (#{e})"}
@@ -60,7 +59,7 @@ class ConsoleModule
 			reply_message = @requester.recv()
 			return JSON.parse(reply_message)
 		rescue => e
-			@logger.error("ZerMQ receive failed (#{e})")
+			log_error("ZerMQ receive failed (#{e})")
 			@requester.close
 			@requester = nil
 			return {status: "error", message: "ZeroMQ receive failed (#{e})"}
@@ -71,9 +70,8 @@ class ConsoleModule
 end
 
 class ConsoleModuleDetector < ConsoleModule
-	def initialize(name)
-		super(name)
-		@logger.progname = "ConsoleModuleDetector"
+	def initialize(name, logger: nil)
+		super(name, logger)
 	end
 
 	def id()
@@ -94,9 +92,8 @@ class ConsoleModuleDetector < ConsoleModule
 end
 
 class ConsoleModuleHV < ConsoleModule
-	def initialize(name)
-		super(name)
-		@logger.progname = "ConsoleModuleHV"
+	def initialize(name, logger: nil)
+		super(name, logger)
 	end
 
 	def status()
@@ -121,9 +118,8 @@ class ConsoleModuleHV < ConsoleModule
 end
 
 class ConsoleModuleDisplay < ConsoleModule
-	def initialize(name)
-		super(name)
-		@logger.progname = "ConsoleModuleDisplay"
+	def initialize(name, logger: nil)
+		super(name, logger)
 	end
 
 	# Clears the display output
@@ -143,9 +139,8 @@ class ConsoleModuleDisplay < ConsoleModule
 end
 
 class ConsoleModuleHK < ConsoleModule
-	def initialize(name)
-		super(name)
-		@logger.progname = "ConsoleModuleHK"
+	def initialize(name, logger: nil)
+		super(name, logger)
 	end
 
 	# Clears the display output
@@ -155,9 +150,8 @@ class ConsoleModuleHK < ConsoleModule
 end
 
 class ConsoleModuleDAQ < ConsoleModule
-	def initialize(name)
-		super(name)
-		@logger.progname = "ConsoleModuleHK"
+	def initialize(name, logger: nil)
+		super(name, logger)
 	end
 
 	def ping()

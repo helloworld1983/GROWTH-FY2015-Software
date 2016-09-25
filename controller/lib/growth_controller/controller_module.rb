@@ -1,7 +1,13 @@
+require "growth_controller/logger"
+
 module GROWTH
 	# Super class of controller implementation classes.
 	class ControllerModule
-		def initialize(name)
+		
+		include LoggingInterface
+
+		def initialize(name, logger: nil)
+			set_logger(logger, module_name: name)
 			@controller = nil
 			@name = name
 			@commands = []

@@ -8,5 +8,6 @@ require "growth_controller/detector_controller"
 # to start/stop data acquisition, and to retrieve internal status of the detector.
 # 
 
-controller = GROWTH::DetectorController.new()
+@logger = GROWTH.logger(ARGV, "DetectorController")
+controller = GROWTH::DetectorController.new(logger: @logger)
 controller.run()

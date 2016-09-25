@@ -9,13 +9,13 @@ class ControllerModuleHK < ControllerModule
 	# I2C bus number to be used
 	BME280_I2C_BUS_NUMBER = 1
 
-	def initialize(name)
-		super(name)
+	def initialize(name, logger: nil)
+		super(name, logger: logger)
+		SlowADC.set_logger(logger)
+		GPIO.set_logger(logger)
+		
 		define_command("read")
 		
-		@logger = Logger.new(STDOUT)
-		@logger.progname = "ControllerModuleHK"
-
 		# Construct I2C object and BME280 object
 		@i2cbus = RPi::I2CBus.new(BME280_I2C_BUS_NUMBER)
 		@bme=nil
@@ -25,12 +25,12 @@ class ControllerModuleHK < ControllerModule
 	private
 	def open_bme280()
 		begin
-			@logger.info("Opening BME280...")
+			log_info("Opening BME280...")
 			@bme = RPi::BME280.new(@i2cbus)
-			@logger.info("BME280 successfully opened")
+			log_info("BME280 successfully opened")
 			return true
 		rescue => e
-			@logger.warn("I2C communication with BME280 returned error (#{e}). Perhaps BME280 is not connected.")
+			log_warn("I2C communication with BME280 returned error (#{e}). Perhaps BME280 is not connected.")
 			@bme = nil
 			return false
 		end
@@ -42,7 +42,7 @@ class ControllerModuleHK < ControllerModule
 		begin
 			slowadc_result = SlowADC.read()
 		rescue => e
-			@logger.error("Slow ADC read failed (#{e})")
+			log_error("Slow ADC read failed (#{e})")
 			return {status: "error", message: "SlowADC read failed (#{e})"}
 		end
 
@@ -52,7 +52,7 @@ class ControllerModuleHK < ControllerModule
 			if (@bme == nil) then
 				# If not connected, try to connect to BME280
 				if(open_bme280() == false) then
-					@logger.warn("Continue without BME280 (trial #{trial})") 
+					log_warn("Continue without BME280 (trial #{trial})") 
 				end
 			end
 
@@ -63,12 +63,12 @@ class ControllerModuleHK < ControllerModule
 					@bme.update
 					bme_read_succeeded = true
 				rescue => e
-					@logger.error("BME280 read error (trial #{trial}) (#{e})")
+					log_error("BME280 read error (trial #{trial}) (#{e})")
 					@bme = nil
 				end
 				
 				if bme_read_succeeded == true and @bme != nil then
-					@logger.debug("BME280 read successful (trial #{trial})")
+					log_debug("BME280 read successful (trial #{trial})")
 					bme280_result = {
 						temperature: {value:@bme.temperature, units:"degC"},
 						pressure: {value:@bme.pressure, units:"mb"},
