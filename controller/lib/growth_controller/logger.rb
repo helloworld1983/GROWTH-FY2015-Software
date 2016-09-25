@@ -63,7 +63,7 @@ module GROWTH
 	# Provides logging capabilities for submodules that comprises
 	# a bigger program. Logged string will have module name if
 	# module_name is specified in the set_logger() method.
-	module LoggingInterface
+	class LoggingInterface
 		
 		def initialize()
 			@logger = nil

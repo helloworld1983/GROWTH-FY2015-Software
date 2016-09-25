@@ -19,8 +19,7 @@ module GROWTH
   GROWTH_KEY_FILE    = ENV["GROWTH_KEY_FILE"]
   GROWTH_REPOSITORY  = ENV["GROWTH_REPOSITORY"]
 
-  class DetectorController
-    include LoggingInterface
+  class DetectorController < LoggingInterface
 
     DETECTOR_CONTROLLER_ZMQ_PORT_NUMBER   = 10000
     LOG_MESSAGE_CONTROLLER_STARTED = "controller daemon started"

@@ -3,8 +3,7 @@ require "logger"
 require "growth_controller/logger"
 
 module GROWTH
-  class Config
-    include LoggingInterface
+  class Config < LoggingInterface
 
     DEFAULT_DAQ_EXPOSURE_SEC = 1800
     DEFAULT_HK_SAMPLING_PERIOD = 120

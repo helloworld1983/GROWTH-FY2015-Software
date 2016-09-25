@@ -9,9 +9,7 @@ module GROWTH
 #---------------------------------------------
 # ConsoleModules
 #---------------------------------------------
-class ConsoleModule
-	include LoggingInterface
-
+class ConsoleModule < LoggingInterface
 	@@context = ZMQ::Context.new
 
 	def initialize(name, logger: nil)
