@@ -36,6 +36,7 @@ module GROWTH
     attr_accessor :has_hv_conversion
     attr_accessor :has_hv_default
     attr_accessor :has_temperature_limit
+    attr_accessor :has_hv_limit
     attr_accessor :autorun_daq_exposure_sec
     attr_accessor :autorun_hk_sampling_period_sec
 
@@ -131,7 +132,7 @@ module GROWTH
       @has_hv_conversion = false
       if(yaml["hv"]!=nil)then
         # DAC-HV conversion equation
-        if(yaml["hv"]["conversion"]==nil)then
+        if(yaml["hv"]["conversion"]!=nil)then
           @has_hv_conversion = true
           for ch,equation in yaml["hv"]["conversion"]
             # equation should use x or DAC_mV as variable that represents DAC output
@@ -147,7 +148,7 @@ module GROWTH
         # Nominal HV values
         @hv_default_DAC_mV = {}
         @has_hv_default = false
-        if(yaml["hv"]["default"]==nil)then
+        if(yaml["hv"]["default"]!=nil)then
           @has_hv_default = true
           for ch,default_DAC_mV in yaml["hv"]["default"]
             @hv_default_DAC_mV[ch.to_i] = default_DAC_mV.to_i
@@ -171,7 +172,7 @@ module GROWTH
       @has_hv_limit = false
       @limit_hv = {0 => 700, 1 => 700}
 
-      if(yaml["limits"]==nil)then
+      if(yaml["limits"]!=nil)then
         # Temperature limits
         if(yaml["limits"]["temperature"]!=nil)then
           for threshold_type,value in yaml["limits"]["temperature"]
