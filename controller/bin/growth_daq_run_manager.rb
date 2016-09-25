@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require "growth_controller/logger"
 require "growth_controller/config"
 require "growth_controller/console_modules"
 
@@ -11,18 +12,18 @@ class DAQRunManager
   WAIT_DURATION_SEC = 15
   HK_CHECK_PERIOD_SEC = 30
   
-  def initialize(logger, growth_config)
-    @logger = logger
-    @growth_config = growth_config
+  def initialize()
+    @logger = GROWTH.logger(ARGV, "DAQRunManager")
+    @growth_config = GROWTH::Config.new(logger: @logger)
     # Check if temperature limits are defined in growth_config.yaml
     if(!@growth_config.has_temperature_limit)then
       @logger.fatal("Temperature limits should be defined in growth_config.yaml")
       exit(-1)
     end
 
-    @hv   = GROWTH::ConsoleModuleHV.new("hv")  
+    @hv = GROWTH::ConsoleModuleHV.new("hv")  
     @hk = GROWTH::ConsoleModuleHK.new("hk")
-    @daq  = GROWTH::ConsoleModuleDAQ.new("daq")
+    @daq = GROWTH::ConsoleModuleDAQ.new("daq")
     
     @daq_run_can_be_started = false
     @time_since_last_hk_check = 999
@@ -135,11 +136,5 @@ class DAQRunManager
 
 end
 
-@logger = Logger.new(STDOUT)
-@logger.progname = "growth_daq_run_manager"
-
-@logger.info("Starting...")
-@growth_config = GROWTH::Config.new()
-
-daq_run_manager = DAQRunManager.new(@logger, @growth_config)
+daq_run_manager = DAQRunManager.new()
 daq_run_manager.run()
